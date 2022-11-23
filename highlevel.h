@@ -122,4 +122,14 @@ enum HighLevelOpcode {
 // Returns nullptr if the opcode is unknown.
 const char *highlevel_opcode_to_str(HighLevelOpcode opcode);
 
+// Determine the source operand size (int bytes) implied by a specified
+// opcode. If the opcode doesn't have a source operand conveying data,
+// 0 is returned.
+int highlevel_opcode_get_source_operand_size(HighLevelOpcode opcode);
+
+// Determine the destination operand size (int bytes) implied by a specified
+// opcode. If the opcode doesn't have a destination operand,
+// 0 is returned.
+int highlevel_opcode_get_dest_operand_size(HighLevelOpcode opcode);
+
 #endif // HIGHLEVEL_H

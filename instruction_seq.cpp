@@ -2,7 +2,8 @@
 #include "instruction.h"
 #include "instruction_seq.h"
 
-InstructionSequence::InstructionSequence() {
+InstructionSequence::InstructionSequence()
+  : m_funcdef_ast(nullptr) {
 }
 
 InstructionSequence::~InstructionSequence() {

@@ -42,9 +42,27 @@ ARITH = [
 
 SIZES = [ :b, :w, :l, :q ]
 
+NBYTES = {
+  :b => 1,
+  :w => 2,
+  :l => 4,
+  :q => 8,
+}
+
 def promotions(s)
   pairs = (0..SIZES.length-1).to_a.product((1..SIZES.length-1).to_a)
-  pairs = pairs.filter { |pair| pair[0] < pair[1] }
+
+  # Array#filter exists only in Ruby 2.7 or higher
+  #pairs = pairs.filter { |pair| pair[0] < pair[1] }
+
+  # Only the pairs where the source size is smaller than the dest
+  # size are needed
+  filtered_pairs = []
+  pairs.each do |pair|
+    filtered_pairs.push(pair) if pair[0] < pair[1]
+  end
+  pairs = filtered_pairs
+
   return pairs.map { |pair| "#{s}_#{SIZES[pair[0]]}#{SIZES[pair[1]]}".to_sym }
 end
 
@@ -82,11 +100,47 @@ OPCODES = [
   :cjmp_f,    # conditional jump if boolean is false
 ]
 
-opcode_names = OPCODES.map { |sym| "HINS_#{sym.to_s}" }
+$opcode_names = OPCODES.map { |sym| "HINS_#{sym.to_s}" }
 
 #opcode_names.each do |opcode_name|
 #  puts opcode_name
 #end
+
+def gen_operand_size_fn(outf, fn_name, is_src)
+
+  outf.print <<"EOF5"
+
+int #{fn_name}(HighLevelOpcode opcode) {
+  switch (opcode) {
+EOF5
+
+  $opcode_names.each do |opcode_name|
+    operand_size = 0
+    opcode_name_str = opcode_name.to_s
+
+    if m = /_([bwlq][bwlq])$/.match(opcode_name_str)
+      suffix = m[1]
+      size_suffix = is_src ? suffix[0] : suffix[1]
+      raise "Huh?" if !NBYTES.has_key?(size_suffix.to_sym)
+      operand_size = NBYTES[size_suffix.to_sym]
+    elsif opcode_name_str.end_with?('_b')
+      operand_size = 1
+    elsif opcode_name_str.end_with?('_w')
+      operand_size = 2
+    elsif opcode_name_str.end_with?('_l')
+      operand_size = 4
+    elsif opcode_name_str.end_with?('_q')
+      operand_size = 8
+    end
+    outf.puts "  case #{opcode_name}: return #{operand_size};"
+  end
+
+  outf.print <<"EOF6"
+  default: return 0;
+  }
+}
+EOF6
+end
 
 # Generate highlevel.h
 File.open('highlevel.h', 'w') do |outf|
@@ -102,7 +156,7 @@ File.open('highlevel.h', 'w') do |outf|
 enum HighLevelOpcode {
 EOF1
 
-  opcode_names.each do |opcode_name|
+  $opcode_names.each do |opcode_name|
     outf.puts "  #{opcode_name},"
   end
 
@@ -112,6 +166,16 @@ EOF1
 // Translate a high-level opcode to its assembler mnemonic.
 // Returns nullptr if the opcode is unknown.
 const char *highlevel_opcode_to_str(HighLevelOpcode opcode);
+
+// Determine the source operand size (int bytes) implied by a specified
+// opcode. If the opcode doesn't have a source operand conveying data,
+// 0 is returned.
+int highlevel_opcode_get_source_operand_size(HighLevelOpcode opcode);
+
+// Determine the destination operand size (int bytes) implied by a specified
+// opcode. If the opcode doesn't have a destination operand,
+// 0 is returned.
+int highlevel_opcode_get_dest_operand_size(HighLevelOpcode opcode);
 
 #endif // HIGHLEVEL_H
 EOF2
@@ -128,7 +192,7 @@ const char *highlevel_opcode_to_str(HighLevelOpcode opcode) {
   switch (opcode) {
 EOF3
 
-  opcode_names.each do |opcode_name|
+  $opcode_names.each do |opcode_name|
     len = opcode_name.length
     mnemonic = opcode_name[5..len-1]
     pad = ' ' * (16 - len)
@@ -140,6 +204,9 @@ EOF3
   } // end switch
 } // end opcode_to_str function
 EOF4
+
+  gen_operand_size_fn(outf, 'highlevel_opcode_get_source_operand_size', true)
+  gen_operand_size_fn(outf, 'highlevel_opcode_get_dest_operand_size', false)
 end
 
 # Generate highlevel.cpp

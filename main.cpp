@@ -24,6 +24,7 @@
 #include "grammar_symbols.h"
 #include "node.h"
 #include "print_highlevel_code.h"
+#include "print_lowlevel_code.h"
 #include "exceptions.h"
 
 void usage() {
@@ -119,15 +120,11 @@ void process_source_file(const std::string &filename, Mode mode) {
         std::unique_ptr<ModuleCollector> module_collector;
 
         if (mode == Mode::HIGHLEVEL_CODEGEN) {
-          module_collector.reset(new PrintHighlevelCode());
-        } else {
-          // TODO: here is where we could create a ModuleCollector which does low-level code gen
-          printf("TODO: compile the source code\n");
-        }
-
-        // high-level code generation
-        if (module_collector.get() != nullptr) {
+          module_collector.reset(new PrintHighLevelCode());
           ctx.highlevel_codegen(module_collector.get());
+        } else {
+          module_collector.reset(new PrintLowLevelCode());
+          ctx.lowlevel_codegen(module_collector.get());
         }
       }
     }

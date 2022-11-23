@@ -25,7 +25,6 @@
 #include <string>
 #include "semantic_analysis.h"
 #include "module_collector.h"
-#include "local_storage_allocation.h"
 class Node;
 
 // The Context class gathers together all of the objects/data
@@ -53,9 +52,10 @@ public:
   // Get pointer to root of AST
   Node *get_ast() const { return m_ast; }
 
-  // TODO: add member functions for semantic analysis, code generation, etc.
+  // functions for semantic analysis, code generation, etc.
   void analyze();
   void highlevel_codegen(ModuleCollector *module_collector);
+  void lowlevel_codegen(ModuleCollector *module_collector, bool optimize = false);
 };
 
 #endif // CONTEXT_H

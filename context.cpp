@@ -32,6 +32,8 @@
 #include "semantic_analysis.h"
 #include "symtab.h"
 #include "highlevel_codegen.h"
+#include "local_storage_allocation.h"
+#include "lowlevel_codegen.h"
 #include "context.h"
 
 Context::Context()
@@ -125,29 +127,29 @@ void Context::analyze() {
 }
 
 void Context::highlevel_codegen(ModuleCollector *module_collector) {
+  // Assign
+  //   - vreg numbers to parameters
+  //   - local storage offsets to local variables requiring storage in
+  //     memory
+  //
+  // This will also determine the total local storage requirements
+  // for each function.
+  //
+  // Any local variable not assigned storage in memory will be allocated
+  // a vreg as its storage.
+  LocalStorageAllocation local_storage_alloc;
+  local_storage_alloc.visit(m_ast);
 
-  LocalStorageAllocation allocator;
-  allocator.visit(m_ast);
-  //       find all of the string constants in the AST
+  // TODO: find all of the string constants in the AST
   //       and call the ModuleCollector's collect_string_constant
   //       member function for each one
-  for(auto i: allocator.get_str_node()){
-    //strip quote from literal value class
-    std::string s(i->get_str().substr(1));
-    s.pop_back();
-
-    std::string name = "_str" + std::to_string(i->get_vreg());
-    module_collector->collect_string_constant(name, s);
-    // printf("string: %s\n", i.c_str());
-  }
 
   // collect all of the global variables
   SymbolTable *globals = m_sema.get_global_symtab();
   for (auto i = globals->cbegin(); i != globals->cend(); ++i) {
     Symbol *sym = *i;
-    if (sym->get_kind() == SymbolKind::VARIABLE){
+    if (sym->get_kind() == SymbolKind::VARIABLE)
       module_collector->collect_global_var(sym->get_name(), sym->get_type());
-    }
   }
 
   // generating high-level code for each function, and then send the
@@ -160,9 +162,69 @@ void Context::highlevel_codegen(ModuleCollector *module_collector) {
       hl_codegen.visit(child);
       std::string fn_name = child->get_kid(1)->get_str();
       std::shared_ptr<InstructionSequence> hl_iseq = hl_codegen.get_hl_iseq();
+
+      // store a pointer to the function definition AST in the
+      // high-level InstructionSequence: this is useful in case information
+      // about the function definition is needed by the low-level
+      // code generator
+      hl_iseq->set_funcdef_ast(child);
+
       module_collector->collect_function(fn_name, hl_iseq);
+
       // make sure local label numbers are not reused between functions
       next_label_num = hl_codegen.get_next_label_num();
     }
   }
+}
+
+namespace {
+
+// ModuleCollector implementation which generates low-level code
+// from generated high-level code, and then forwards the generated
+// low-level code to a delegate.
+class LowLevelCodeGenModuleCollector : public ModuleCollector {
+private:
+  ModuleCollector *m_delegate;
+  bool m_optimize;
+
+public:
+  LowLevelCodeGenModuleCollector(ModuleCollector *delegate, bool optimize);
+  virtual ~LowLevelCodeGenModuleCollector();
+
+  virtual void collect_string_constant(const std::string &name, const std::string &strval);
+  virtual void collect_global_var(const std::string &name, const std::shared_ptr<Type> &type);
+  virtual void collect_function(const std::string &name, const std::shared_ptr<InstructionSequence> &iseq);
+};
+
+LowLevelCodeGenModuleCollector::LowLevelCodeGenModuleCollector(ModuleCollector *delegate, bool optimize)
+  : m_delegate(delegate)
+  , m_optimize(optimize) {
+}
+
+LowLevelCodeGenModuleCollector::~LowLevelCodeGenModuleCollector() {
+}
+
+void LowLevelCodeGenModuleCollector::collect_string_constant(const std::string &name, const std::string &strval) {
+  m_delegate->collect_string_constant(name, strval);
+}
+
+void LowLevelCodeGenModuleCollector::collect_global_var(const std::string &name, const std::shared_ptr<Type> &type) {
+  m_delegate->collect_global_var(name, type);
+}
+
+void LowLevelCodeGenModuleCollector::collect_function(const std::string &name, const std::shared_ptr<InstructionSequence> &iseq) {
+  LowLevelCodeGen ll_codegen(m_optimize);
+
+  // translate high-level code to low-level code
+  std::shared_ptr<InstructionSequence> ll_iseq = ll_codegen.generate(iseq);
+
+  // send the low-level code on to the delegate (i.e., print the code)
+  m_delegate->collect_function(name, ll_iseq);
+}
+
+}
+
+void Context::lowlevel_codegen(ModuleCollector *module_collector, bool optimize) {
+  LowLevelCodeGenModuleCollector ll_codegen_module_collector(module_collector, optimize);
+  highlevel_codegen(&ll_codegen_module_collector);
 }

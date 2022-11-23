@@ -5,6 +5,7 @@
 #include <string>
 
 class Instruction;
+class Node;
 
 class InstructionSequence {
 private:
@@ -15,6 +16,7 @@ private:
 
   std::vector<Slot> m_instructions;
   std::string m_next_label;
+  Node *m_funcdef_ast; // pointer to function definition AST node
   // TODO: could map labels to indexes for faster lookup
 
   // copy constructor and assignment operator are not allowed
@@ -62,6 +64,10 @@ public:
   InstructionSequence();
   virtual ~InstructionSequence();
 
+  // Access to function definition AST node
+  void set_funcdef_ast(Node *funcdef_ast) { m_funcdef_ast = funcdef_ast; }
+  Node *get_funcdef_ast() const { return m_funcdef_ast; }
+
   // get begin and end const_iterators
   const_iterator cbegin() const { return const_iterator(m_instructions.cbegin()); }
   const_iterator cend() const { return const_iterator(m_instructions.cend()); }
@@ -82,7 +88,7 @@ public:
   void define_label(const std::string &label);
 
   // Determine if Instruction at given index has a label.
-  bool has_label(unsigned index) const { return m_instructions.at(index).ins; }
+  bool has_label(unsigned index) const { return !m_instructions.at(index).label.empty(); }
 
   // Determine if Instruction referred to by specified iterator has a label.
   bool has_label(const_iterator i) const { return i.has_label(); }

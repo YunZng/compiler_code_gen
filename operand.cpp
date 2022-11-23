@@ -74,13 +74,13 @@ Operand::Operand(Kind kind, long ival1)
   if (!props.is_non_reg()) {
     m_basereg = int(ival1);
   } else if (props.is_imm_ival()) {
-    m_imm_ival = int(ival1);
+    m_imm_ival = ival1;
   } else {
     assert(false);
   }
 }
 
-// ival2 is either index_reg or imm_ival (depending on operand kind)
+// ival2 is either index_reg or imm_ival/offset (depending on operand kind)
 Operand::Operand(Kind kind, int basereg, long ival2)
   : m_kind(kind)
   , m_basereg(basereg)
@@ -89,7 +89,7 @@ Operand::Operand(Kind kind, int basereg, long ival2)
   const OperandProperties &props = oprops(kind);
   if (props.has_index_reg()) {
     m_index_reg = int(ival2);
-  } else if (props.has_imm_ival()) {
+  } else if (props.has_imm_ival() || props.has_offset()) {
     m_imm_ival = ival2;
   } else {
     assert(false);
@@ -158,6 +158,12 @@ int Operand::get_index_reg() const {
 }
 
 long Operand::get_imm_ival() const {
+  assert(oprops(m_kind).has_imm_ival());
+  return m_imm_ival;
+}
+
+long Operand::get_offset() const {
+  assert(oprops(m_kind).has_offset());
   return m_imm_ival;
 }
 

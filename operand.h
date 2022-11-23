@@ -89,9 +89,11 @@ public:
   // (Either because it is a label, or is an immediate label.)
   bool has_label() const;
 
+  // getters
   int get_base_reg() const;
   int get_index_reg() const;
   long get_imm_ival() const;
+  long get_offset() const;
 
   Operand to_memref() const;
 
