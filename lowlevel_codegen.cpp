@@ -286,6 +286,7 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins , const std::sha
 
   printf("%s not handled\n" , highlevel_opcode_to_str(hl_opcode));
   return;
+
   // RuntimeError::raise("high level opcode %d not handled" , int(hl_opcode));
 }
 
