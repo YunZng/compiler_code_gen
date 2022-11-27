@@ -328,21 +328,21 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
 
 // TODO: implement other private member functions
 Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode, int size, const std::shared_ptr<InstructionSequence>& ll_iseq){
-  Operand::Kind siz = select_mreg_kind(size);
   if(hl_opcode.is_imm_ival()){
     return hl_opcode;
   }
+
   if(hl_opcode.get_kind() == Operand::Kind::VREG){
     int base = hl_opcode.get_base_reg();
     if(base >= 10){
       base -= 10;
       return Operand(Operand::MREG64_MEM_OFF, MREG_RBP, (base * 8) - m_total_memory_storage);
     } else if(base == 1){
-      return Operand(siz, MREG_RDI);
+      return Operand(select_mreg_kind(size), MREG_RDI);
     } else if(base == 2){
-      return Operand(siz, MREG_RSI);
+      return Operand(select_mreg_kind(size), MREG_RSI);
     } else{
-      return Operand(siz, MREG_RAX);
+      return Operand(select_mreg_kind(size), MREG_RAX);
     }
 
   }
