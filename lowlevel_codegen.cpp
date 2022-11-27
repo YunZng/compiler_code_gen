@@ -223,131 +223,100 @@ namespace{
 
 void LowLevelCodeGen::translate_instruction(Instruction* hl_ins , const std::shared_ptr<InstructionSequence>& ll_iseq){
   HighLevelOpcode hl_opcode = HighLevelOpcode(hl_ins->get_opcode());
+  // single operand
   if (hl_opcode == HINS_enter){
-    // Function prologue: this will create an ABI-compliant stack frame.
-    // The local variable area is *below* the address in %rbp, and local storage
-    // can be accessed at negative offsets from %rbp. For example, the topmost
-    // 4 bytes in the local storage area are at -4(%rbp).
     ll_iseq->append(new Instruction(MINS_PUSHQ , Operand(Operand::MREG64 , MREG_RBP)));
     ll_iseq->append(new Instruction(MINS_MOVQ , Operand(Operand::MREG64 , MREG_RSP) , Operand(Operand::MREG64 , MREG_RBP)));
     ll_iseq->append(new Instruction(MINS_SUBQ , Operand(Operand::IMM_IVAL , m_total_memory_storage) , Operand(Operand::MREG64 , MREG_RSP)));
 
     return;
   }
-
   if (hl_opcode == HINS_leave){
-    // Function epilogue: deallocate local storage area and restore original value
-    // of %rbp
     ll_iseq->append(new Instruction(MINS_ADDQ , Operand(Operand::IMM_IVAL , m_total_memory_storage) , Operand(Operand::MREG64 , MREG_RSP)));
     ll_iseq->append(new Instruction(MINS_POPQ , Operand(Operand::MREG64 , MREG_RBP)));
 
     return;
   }
-
   if (hl_opcode == HINS_ret){
     ll_iseq->append(new Instruction(MINS_RET));
     return;
   }
 
-  // TODO: handle other high-level instructions
-  // Note that you can use the highlevel_opcode_get_source_operand_size() and
-  // highlevel_opcode_get_dest_operand_size() functions to determine the
-  // size (in bytes, 1, 2, 4, or 8) of either the source operands or
-  // destination operand of a high-level instruction. This should be useful
-  // for choosing the appropriate low-level instructions and
-  // machine register operands.
-  if (match_hl(HINS_mov_b , hl_opcode)){
-    int size = highlevel_opcode_get_source_operand_size(hl_opcode);
-
-    LowLevelOpcode mov_opcode = select_ll_opcode(MINS_MOVB , size);
-
-    Operand src_operand = get_ll_operand(hl_ins->get_operand(1) , size , ll_iseq);
-    Operand dest_operand = get_ll_operand(hl_ins->get_operand(0) , size , ll_iseq);
-
-    if (src_operand.is_memref() && dest_operand.is_memref()){
-      // move source operand into a temporary register
-      Operand::Kind mreg_kind = select_mreg_kind(size);
-      Operand r10(mreg_kind , MREG_R10);
-      ll_iseq->append(new Instruction(mov_opcode , src_operand , r10));
-      src_operand = r10;
-    }
-
-    ll_iseq->append(new Instruction(mov_opcode , src_operand , dest_operand));
+  // label
+  Operand label = hl_ins->get_operand(0);
+  if (hl_opcode == HINS_call){
+    ll_iseq->append(new Instruction(MINS_CALL , label));
     return;
   }
-
-  if (match_hl(HINS_add_b , hl_opcode)){
-    int size = highlevel_opcode_get_source_operand_size(hl_opcode);
-
-    LowLevelOpcode add_opcode = select_ll_opcode(MINS_ADDB , size);
-    LowLevelOpcode mov_opcode = select_ll_opcode(MINS_MOVB , size);
-
-    // Operand dest_operand = get_ll_operand(hl_ins->get_operand(0) , size , ll_iseq);
-    Operand dest_operand = get_ll_operand(hl_ins->get_operand(0) , size , ll_iseq);
-    Operand first_operand = get_ll_operand(hl_ins->get_operand(1) , size , ll_iseq);
-    Operand sec_operand = get_ll_operand(hl_ins->get_operand(2) , size , ll_iseq);
-
-    if (first_operand.is_memref() && sec_operand.is_memref()){
-      // move source operand into a temporary register
-      Operand::Kind mreg_kind = select_mreg_kind(size);
-      Operand r10(mreg_kind , MREG_R10);
-      ll_iseq->append(new Instruction(mov_opcode , first_operand , r10));
-      first_operand = r10;
-    }
-
-    ll_iseq->append(new Instruction(add_opcode , sec_operand , first_operand));
-    ll_iseq->append(new Instruction(mov_opcode , first_operand , dest_operand));
-    return;
-  }
-
   if (hl_opcode == HINS_jmp){
-    Operand jmp_dest = hl_ins->get_operand(0);
-
-    ll_iseq->append(new Instruction(MINS_JMP , jmp_dest));
+    ll_iseq->append(new Instruction(MINS_JMP , label));
     return;
   }
 
-  if (match_hl(HINS_cmplte_b , hl_opcode)){
-    int size = highlevel_opcode_get_source_operand_size(hl_opcode);
+  // double operand
 
-    LowLevelOpcode cmp_opcode = select_ll_opcode(MINS_CMPB , size);
-    LowLevelOpcode movzb_opcode = select_ll_opcode(MINS_MOVZBW , 1 , size);
-    LowLevelOpcode mov_opcode = select_ll_opcode(MINS_MOVB , size);
-
-    Operand dest_operand = get_ll_operand(hl_ins->get_operand(0) , size , ll_iseq);
-    Operand first_operand = get_ll_operand(hl_ins->get_operand(1) , size , ll_iseq);
-    Operand sec_operand = get_ll_operand(hl_ins->get_operand(2) , size , ll_iseq);
-
-    Operand::Kind mreg_kind = select_mreg_kind(size);
-    Operand r10(mreg_kind , MREG_R10);
-    Operand r11(mreg_kind , MREG_R11);
-    if (first_operand.is_memref() && sec_operand.is_memref()){
-      // move source operand into a temporary register
-      ll_iseq->append(new Instruction(mov_opcode , first_operand , r10));
-      first_operand = r10;
-    }
-
-    // ll_iseq->append(new Instruction(mov_opcode, first_operand, r10));
-    // first_operand = r10;
-    ll_iseq->append(new Instruction(cmp_opcode , sec_operand , first_operand));
-    //zero byte
-    Operand r10b(Operand::MREG8 , MREG_R10);
-    ll_iseq->append(new Instruction(MINS_SETLE , r10b));
-    ll_iseq->append(new Instruction(movzb_opcode , r10b , r11));
-    ll_iseq->append(new Instruction(mov_opcode , r11 , dest_operand));
-
-    return;
-  }
-
+  int size = highlevel_opcode_get_source_operand_size(hl_opcode);
+  Operand first_operand = get_ll_operand(hl_ins->get_operand(0) , size , ll_iseq);
   if (hl_opcode == HINS_cjmp_t){
-    int size = highlevel_opcode_get_source_operand_size(hl_opcode);
-
-    Operand operand = get_ll_operand(hl_ins->get_operand(0) , size , ll_iseq);
-    Operand label = hl_ins->get_operand(1);
+    label = hl_ins->get_operand(1);
     Operand zero(Operand::IMM_IVAL , 0);
 
-    ll_iseq->append(new Instruction(MINS_CMPL , zero , operand));
+    ll_iseq->append(new Instruction(MINS_CMPL , zero , first_operand));
     ll_iseq->append(new Instruction(MINS_JNE , label));
+    return;
+  }
+
+  Operand::Kind mreg_kind = select_mreg_kind(size);
+  LowLevelOpcode mov_opcode = select_ll_opcode(MINS_MOVB , size);
+  Operand sec_operand = get_ll_operand(hl_ins->get_operand(1) , size , ll_iseq);
+  Operand r10(mreg_kind , MREG_R10);
+  Operand r11(mreg_kind , MREG_R11);
+  if (match_hl(HINS_mov_b , hl_opcode)){
+
+    if (sec_operand.is_memref() && first_operand.is_memref()){
+      ll_iseq->append(new Instruction(mov_opcode , sec_operand , r10));
+      sec_operand = r10;
+    }
+    ll_iseq->append(new Instruction(mov_opcode , sec_operand , first_operand));
+    return;
+  }
+  if (match_hl(HINS_add_b , hl_opcode)){
+    LowLevelOpcode add_opcode = select_ll_opcode(MINS_ADDB , size);
+
+    Operand trd_operand = get_ll_operand(hl_ins->get_operand(2) , size , ll_iseq);
+
+    if (sec_operand.is_memref() && trd_operand.is_memref()){
+      ll_iseq->append(new Instruction(mov_opcode , sec_operand , r10));
+      sec_operand = r10;
+    }
+
+    ll_iseq->append(new Instruction(add_opcode , trd_operand , sec_operand));
+    ll_iseq->append(new Instruction(mov_opcode , sec_operand , first_operand));
+    return;
+  }
+  if (match_hl(HINS_cmplte_b , hl_opcode) || match_hl(HINS_cmplt_b , hl_opcode) || match_hl(HINS_cmpeq_b , hl_opcode)){
+    LowLevelOpcode cmp_opcode = select_ll_opcode(MINS_CMPB , size);
+    LowLevelOpcode movzb_opcode = select_ll_opcode(MINS_MOVZBW , 1 , size);
+
+    Operand trd_operand = get_ll_operand(hl_ins->get_operand(2) , size , ll_iseq);
+
+    if (sec_operand.is_memref() && trd_operand.is_memref()){
+      ll_iseq->append(new Instruction(mov_opcode , sec_operand , r10));
+      sec_operand = r10;
+    }
+    ll_iseq->append(new Instruction(cmp_opcode , trd_operand , sec_operand));
+    //zero byte
+    Operand r10b(Operand::MREG8 , MREG_R10);
+    if (match_hl(HINS_cmplte_b , hl_opcode)){
+      ll_iseq->append(new Instruction(MINS_SETLE , r10b));
+    } else if (match_hl(HINS_cmplt_b , hl_opcode)){
+      ll_iseq->append(new Instruction(MINS_SETL , r10b));
+    } else if (match_hl(HINS_cmpeq_b , hl_opcode)){
+      ll_iseq->append(new Instruction(MINS_SETE , r10b));
+    }
+    ll_iseq->append(new Instruction(movzb_opcode , r10b , r11));
+    ll_iseq->append(new Instruction(mov_opcode , r11 , first_operand));
+
     return;
   }
 
@@ -376,5 +345,8 @@ Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode , int size , const std
   return Operand(Operand::MREG64_MEM_OFF , MREG_RBP , (10000 * 8) - m_total_memory_storage);
 }
 
-//alias back='cd ~/compilers/assign04-yulun/compiler_code_gen/'
-//alias test='git pull; cd ~/compilers/fall2022-tests/assign04/; ./run_all.rb; cd ~/compilers/assign04-yulun/compiler_code_gen/;'
+/*
+
+alias back='cd ~/compilers/assign04-yulun/compiler_code_gen/'; alias test='git pull origin main; make -j; cd ~/compilers/fall2022-tests/assign04/; ./run_all.rb; cd ~/compilers/assign04-yulun/compiler_code_gen/;'; export ASSIGN04_DIR=~/compilers/assign04-yulun/compiler_code_gen/
+
+*/
