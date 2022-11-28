@@ -88,8 +88,10 @@ void HighLevelCodegen::visit_return_expression_statement(Node* n){
   visit(expr);
 
   std::shared_ptr<Type> index_type = expr->get_type();
-  HighLevelOpcode code = HINS_nop;
   int dif = (int)n->get_type()->get_basic_type_kind();
+  HighLevelOpcode code = HINS_nop;
+  if(index_type->get_basic_type_kind() == n->get_type()->get_basic_type_kind())
+    goto done;
   switch(index_type->get_basic_type_kind()){
     case BasicTypeKind::CHAR:{
       if(index_type->is_signed()){
@@ -125,8 +127,9 @@ void HighLevelCodegen::visit_return_expression_statement(Node* n){
     expr->set_op(temp);
     curVreg--;
   }
+done:
   // move the computed value to the return value vreg
-  HighLevelOpcode mov_opcode = get_opcode(HINS_mov_b, index_type);
+  HighLevelOpcode mov_opcode = get_opcode(HINS_mov_b, n->get_type());
   m_hl_iseq->append(new Instruction(mov_opcode, Operand(Operand::VREG, 0), expr->get_op()));
 
   // jump to the return label
