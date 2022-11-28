@@ -47,5 +47,5 @@ public:
 private:
   std::string next_label();
   Operand next_vr();
-  int get_offset(std::shared_ptr<Type> , std::string);
+  int get_offset(std::shared_ptr<Type>, std::string);
 };

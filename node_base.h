@@ -38,32 +38,32 @@ enum ValueType{
 // to define any attributes and methods that Node objects should have
 // (constant value, results of semantic analysis, code generation info,
 // etc.)
-class NodeBase {
+class NodeBase{
 private:
   std::shared_ptr<Type> m_type;
   std::shared_ptr<LiteralValue> m_lit;
-  Symbol *m_symbol;
+  Symbol* m_symbol;
   ValueType value_type;
   Operand op;
   unsigned vreg;
   // copy ctor and assignment operator not supported
-  NodeBase(const NodeBase &);
-  NodeBase &operator=(const NodeBase &);
+  NodeBase(const NodeBase&);
+  NodeBase& operator=(const NodeBase&);
 
 public:
   NodeBase();
   virtual ~NodeBase();
 
-  void set_symbol(Symbol *symbol);
-  void set_type(const std::shared_ptr<Type> &type);
-  void set_lit(const std::shared_ptr<LiteralValue> &lit);
+  void set_symbol(Symbol* symbol);
+  void set_type(const std::shared_ptr<Type>& type);
+  void set_lit(const std::shared_ptr<LiteralValue>& lit);
   void set_value_type(ValueType type);
   void set_op(Operand ope);
   Operand get_op() const;
   void set_vreg(unsigned);
   unsigned get_vreg() const;
   bool has_symbol() const;
-  Symbol *get_symbol() const;
+  Symbol* get_symbol() const;
   std::shared_ptr<Type> get_type() const;
   std::shared_ptr<LiteralValue> get_lit() const;
   ValueType get_value_type() const;

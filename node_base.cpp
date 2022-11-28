@@ -21,7 +21,7 @@
 #include <cassert>
 #include "node_base.h"
 
-NodeBase::NodeBase() {
+NodeBase::NodeBase(){
   m_symbol = nullptr;
   m_type = nullptr;
   value_type = NORMAL;
@@ -29,22 +29,22 @@ NodeBase::NodeBase() {
   vreg = 0;
 }
 
-NodeBase::~NodeBase() {
+NodeBase::~NodeBase(){
 }
 
-void NodeBase::set_symbol(Symbol *symbol) {
+void NodeBase::set_symbol(Symbol* symbol){
   assert(!has_symbol());
   // assert(m_type == nullptr);
   m_symbol = symbol;
 }
 
-void NodeBase::set_type(const std::shared_ptr<Type> &type) {
+void NodeBase::set_type(const std::shared_ptr<Type>& type){
   // assert(!has_symbol());
   assert(!m_type);
   m_type = type;
 }
 
-void NodeBase::set_lit(const std::shared_ptr<LiteralValue> &lit) {
+void NodeBase::set_lit(const std::shared_ptr<LiteralValue>& lit){
   assert(!has_symbol());
   assert(!m_lit);
   m_lit = lit;
@@ -63,34 +63,34 @@ void NodeBase::set_value_type(ValueType type){
   value_type = type;
 }
 
-bool NodeBase::has_symbol() const {
+bool NodeBase::has_symbol() const{
   return m_symbol != nullptr;
 }
 
-Symbol *NodeBase::get_symbol() const {
+Symbol* NodeBase::get_symbol() const{
   return m_symbol;
 }
 
-std::shared_ptr<Type> NodeBase::get_type() const {
+std::shared_ptr<Type> NodeBase::get_type() const{
   // this shouldn't be called unless there is actually a type
   // associated with this node
 
-  if (has_symbol())
+  if(has_symbol())
     return m_symbol->get_type(); // Symbol will definitely have a valid Type
-  else {
+  else{
     assert(m_type); // make sure a Type object actually exists
     return m_type;
   }
 }
 
-ValueType NodeBase::get_value_type() const {
+ValueType NodeBase::get_value_type() const{
   return value_type;
 }
 
-Operand NodeBase::get_op() const {
+Operand NodeBase::get_op() const{
   return op;
 }
 
-std::shared_ptr<LiteralValue> NodeBase::get_lit() const {
+std::shared_ptr<LiteralValue> NodeBase::get_lit() const{
   return m_lit;
 }
