@@ -10,59 +10,59 @@
 #include "semantic_analysis.h"
 
 SemanticAnalysis::SemanticAnalysis()
-  : m_global_symtab(new SymbolTable(nullptr)) {
+  : m_global_symtab(new SymbolTable(nullptr)){
   m_cur_symtab = m_global_symtab;
 }
 
-SemanticAnalysis::~SemanticAnalysis() {
+SemanticAnalysis::~SemanticAnalysis(){
   delete(m_cur_symtab);
 }
 
-SymbolTable *SemanticAnalysis::get_global_symtab(){
+SymbolTable* SemanticAnalysis::get_global_symtab(){
   return m_global_symtab;
 }
 
 int debug = 0;
-void SemanticAnalysis::visit_struct_type(Node *n) {
-  if(debug){puts("visit_struct_type");}
+void SemanticAnalysis::visit_struct_type(Node* n){
+  if(debug){ puts("visit_struct_type"); }
   std::string name = "struct " + n->get_kid(0)->get_str();
-  Symbol *target = m_cur_symtab->lookup_recursive_kind(name, SymbolKind::TYPE);
+  Symbol* target = m_cur_symtab->lookup_recursive_kind(name, SymbolKind::TYPE);
   if(!target){
     SemanticError::raise(n->get_loc(), "No such struct visit_struct_type");
   }
   n->set_type(target->get_type());
 }
 
-void SemanticAnalysis::visit_union_type(Node *n) {
+void SemanticAnalysis::visit_union_type(Node* n){
   RuntimeError::raise("union types aren't supported");
 }
 
-void SemanticAnalysis::visit_variable_declaration(Node *n) {
-  if(debug){puts("visit_variable_declaration");}
+void SemanticAnalysis::visit_variable_declaration(Node* n){
+  if(debug){ puts("visit_variable_declaration"); }
   //kid 0 = storage
   //kid 1 = basic type(char, long, short, int, void, signed, unsigned) list
   //kid 2 = declarator(optional pointer + var name) list
   //construct complete type rep
   visit(n->get_kid(1));
   std::shared_ptr<Type> base_type = n->get_kid(1)->get_type();
-  Node *decl_list = n->get_kid(2);
+  Node* decl_list = n->get_kid(2);
   // for each 
   for(auto i = decl_list->cbegin(); i != decl_list->cend(); ++i){
-    Node *declarator = *i;
+    Node* declarator = *i;
     std::shared_ptr<Type> base_type1 = base_type;
     std::string name = build_type(declarator, base_type1);
     if(m_cur_symtab->has_symbol_local(name)){
       SemanticError::raise(declarator->get_kid(0)->get_loc(), "Already defined");
     }
-    
+
     declarator->set_type(base_type1);
     declarator->set_symbol(m_cur_symtab->declare(SymbolKind::VARIABLE, name, base_type1));
     declarator->set_str(name);
   }
 }
 
-void SemanticAnalysis::visit_basic_type(Node *n) {
-  if(debug){puts("visit_basic_type");}
+void SemanticAnalysis::visit_basic_type(Node* n){
+  if(debug){ puts("visit_basic_type"); }
   int kid_cnt = n->get_num_kids();
   // Flags for type creation
   int is_signed = -1;
@@ -75,7 +75,7 @@ void SemanticAnalysis::visit_basic_type(Node *n) {
       case TOK_SIGNED:{
         if(is_signed == -1){
           is_signed = 1;
-        }else{
+        } else{
           SemanticError::raise(n->get_loc(), "Too many signed/unsigned");
         }
         break;
@@ -83,7 +83,7 @@ void SemanticAnalysis::visit_basic_type(Node *n) {
       case TOK_UNSIGNED:{
         if(is_signed == -1){
           is_signed = 0;
-        }else{
+        } else{
           SemanticError::raise(n->get_loc(), "Too many signed/unsigned");
         }
         break;
@@ -91,7 +91,7 @@ void SemanticAnalysis::visit_basic_type(Node *n) {
       case TOK_CHAR:{
         if(type_kind == BasicTypeKind::NOTHING){
           type_kind = BasicTypeKind::CHAR;
-        }else{
+        } else{
           SemanticError::raise(n->get_loc(), "Cannot be more than char at a time");
         }
         break;
@@ -99,7 +99,7 @@ void SemanticAnalysis::visit_basic_type(Node *n) {
       case TOK_SHORT:{
         if(type_kind == BasicTypeKind::NOTHING || type_kind == BasicTypeKind::INT){
           type_kind = BasicTypeKind::SHORT;
-        }else{
+        } else{
           SemanticError::raise(n->get_loc(), "Cannot be more than short at a time");
         }
         break;
@@ -107,8 +107,8 @@ void SemanticAnalysis::visit_basic_type(Node *n) {
       case TOK_INT:{
         if(type_kind == BasicTypeKind::NOTHING){
           type_kind = BasicTypeKind::INT;
-        }else if(type_kind == BasicTypeKind::SHORT || type_kind == BasicTypeKind::LONG){
-        }else{
+        } else if(type_kind == BasicTypeKind::SHORT || type_kind == BasicTypeKind::LONG){
+        } else{
           SemanticError::raise(n->get_loc(), "Cannot be more than int at a time");
         }
         break;
@@ -116,7 +116,7 @@ void SemanticAnalysis::visit_basic_type(Node *n) {
       case TOK_LONG:{
         if(type_kind == BasicTypeKind::NOTHING || type_kind == BasicTypeKind::INT){
           type_kind = BasicTypeKind::LONG;
-        }else{
+        } else{
           SemanticError::raise(n->get_loc(), "Cannot be more than long at a time");
         }
         break;
@@ -124,7 +124,7 @@ void SemanticAnalysis::visit_basic_type(Node *n) {
       case TOK_VOID:{
         if(type_kind == BasicTypeKind::NOTHING){
           type_kind = BasicTypeKind::VOID;
-        }else{
+        } else{
           SemanticError::raise(n->get_loc(), "Cannot be more than void at a time");
         }
         break;
@@ -132,7 +132,7 @@ void SemanticAnalysis::visit_basic_type(Node *n) {
       case TOK_CONST:{
         if(is_const == TypeQualifier::NOTHING){
           is_const = TypeQualifier::CONST;
-        }else{
+        } else{
           SemanticError::raise(n->get_loc(), "Too many const");
         }
         break;
@@ -140,7 +140,7 @@ void SemanticAnalysis::visit_basic_type(Node *n) {
       case TOK_VOLATILE:{
         if(is_volatile == TypeQualifier::NOTHING){
           is_volatile = TypeQualifier::VOLATILE;
-        }else{
+        } else{
           SemanticError::raise(n->get_loc(), "Too many volatile");
         }
         break;
@@ -148,7 +148,7 @@ void SemanticAnalysis::visit_basic_type(Node *n) {
       default:{break;}
     }
   }
-  
+
   // Final basic type checking
   if(type_kind == BasicTypeKind::NOTHING){
     type_kind = BasicTypeKind::INT;
@@ -156,10 +156,10 @@ void SemanticAnalysis::visit_basic_type(Node *n) {
   if(type_kind == BasicTypeKind::VOID && (is_signed != -1 || is_const != TypeQualifier::NOTHING || is_volatile != TypeQualifier::NOTHING)){
     SemanticError::raise(n->get_loc(), "Void cannot be signed/unsigned and(or) qualified");
   }
-  
+
   // Basic type creation
   std::shared_ptr<Type> type_temp(new BasicType(type_kind, is_signed));
-  
+
   //Qualified type creation (if specified)
   if(is_volatile != TypeQualifier::NOTHING){
     std::shared_ptr<Type> temp(new QualifiedType(type_temp, is_volatile));
@@ -169,13 +169,13 @@ void SemanticAnalysis::visit_basic_type(Node *n) {
     std::shared_ptr<Type> temp(new QualifiedType(type_temp, is_const));
     type_temp = temp;
   }
-  
+
   // Pass result using node_base::set_type
   n->set_type(type_temp);
 }
 
-void SemanticAnalysis::visit_function_definition(Node *n) {
-  if(debug){puts("visit_function_definition");}
+void SemanticAnalysis::visit_function_definition(Node* n){
+  if(debug){ puts("visit_function_definition"); }
   // get basic type 
   visit(n->get_kid(0));
   std::shared_ptr<Type> func_type(new FunctionType(n->get_kid(0)->get_type()));
@@ -184,31 +184,31 @@ void SemanticAnalysis::visit_function_definition(Node *n) {
   std::string name = n->get_kid(1)->get_str();
 
   // get parameter list
-  Node *param_list = n->get_kid(2);
+  Node* param_list = n->get_kid(2);
   // add each parameter to func type
   for(auto i = param_list->cbegin(); i != param_list->cend(); ++i){
-    Node *param = *i;
+    Node* param = *i;
     visit(param);
     std::string param_name = param->get_kid(1)->get_str();
     func_type->add_member(Member(param_name, param->get_kid(1)->get_type()));
   }
-  
+
   // Sanity check for function
   if(m_cur_symtab->has_symbol_local(name)){
     if(m_cur_symtab->lookup_local(name)->is_defined()){
       SemanticError::raise(n->get_loc(), "Cannot redefine function %s", name.c_str());
-    }else{
+    } else{
       m_cur_symtab->lookup_local(name)->set_is_defined(true);
       leave_scope();
       return;
     }
   }
   n->set_symbol(m_cur_symtab->define(SymbolKind::FUNCTION, name, func_type));
-  
+
   // new scope for func param, and add them to table, apparently order matters
   enter_scope();
   for(auto i = param_list->cbegin(); i != param_list->cend(); ++i){
-    Node *param = *i;
+    Node* param = *i;
     std::string param_name = param->get_kid(1)->get_str();
     if(m_cur_symtab->has_symbol_local(param_name)){
       SemanticError::raise(param->get_kid(1)->get_loc(), "Cannot have duplicate names");
@@ -222,8 +222,8 @@ void SemanticAnalysis::visit_function_definition(Node *n) {
   leave_scope();
 }
 
-void SemanticAnalysis::visit_function_declaration(Node *n) {
-  if(debug){puts("visit_function_declaration");}
+void SemanticAnalysis::visit_function_declaration(Node* n){
+  if(debug){ puts("visit_function_declaration"); }
   visit(n->get_kid(0));
   std::shared_ptr<Type> func_type(new FunctionType(n->get_kid(0)->get_type()));
 
@@ -231,25 +231,25 @@ void SemanticAnalysis::visit_function_declaration(Node *n) {
   std::string name = n->get_kid(1)->get_str();
 
   // get parameter list
-  Node *param_list = n->get_kid(2);
+  Node* param_list = n->get_kid(2);
 
   // add each parameter to func type
   for(auto i = param_list->cbegin(); i != param_list->cend(); ++i){
-    Node *param = *i;
+    Node* param = *i;
     visit(param);
     std::string param_name = param->get_kid(1)->get_str();
     func_type->add_member(Member(param_name, param->get_kid(1)->get_type()));
   }
-  
+
   // Func type sanity check
   if(m_cur_symtab->has_symbol_local(name)){
-      SemanticError::raise(n->get_loc(), "Cannot redeclaration function %s", name.c_str());
+    SemanticError::raise(n->get_loc(), "Cannot redeclaration function %s", name.c_str());
   }
   m_cur_symtab->declare(SymbolKind::FUNCTION, name, func_type);
 }
 
-void SemanticAnalysis::visit_function_parameter(Node *n) {
-  if(debug){puts("visit_function_parameter");}
+void SemanticAnalysis::visit_function_parameter(Node* n){
+  if(debug){ puts("visit_function_parameter"); }
   visit(n->get_kid(0));
   std::shared_ptr<Type> base_type = n->get_kid(0)->get_type();
   std::shared_ptr<Type> base_type1 = base_type;
@@ -258,13 +258,13 @@ void SemanticAnalysis::visit_function_parameter(Node *n) {
   n->get_kid(1)->set_str(name);
 }
 
-void SemanticAnalysis::visit_statement_list(Node *n) {
-  if(debug){puts("visit_statement_list");}
+void SemanticAnalysis::visit_statement_list(Node* n){
+  if(debug){ puts("visit_statement_list"); }
   visit_children(n);
 }
 
-void SemanticAnalysis::visit_struct_type_definition(Node *n) {
-  if(debug){puts("visit_struct_type_definition");}
+void SemanticAnalysis::visit_struct_type_definition(Node* n){
+  if(debug){ puts("visit_struct_type_definition"); }
 
   //get name
   std::string name = n->get_kid(0)->get_str();
@@ -276,25 +276,25 @@ void SemanticAnalysis::visit_struct_type_definition(Node *n) {
   std::vector<Member> m_vector;
   //AST_FIELD_DEFINITION_LIST
   enter_scope();
-  Node *decl_list = n->get_kid(1);
+  Node* decl_list = n->get_kid(1);
   for(auto i = decl_list->cbegin(); i != decl_list->cend(); ++i){
-    Node *ast_var_dec = *i;
+    Node* ast_var_dec = *i;
     visit(ast_var_dec);
     //AST_DECLARATOR_LIST
-    Node *decl_list1 = ast_var_dec->get_kid(2);
+    Node* decl_list1 = ast_var_dec->get_kid(2);
     for(auto i = decl_list1->cbegin(); i != decl_list1->cend(); ++i){
-      Node *declarator = *i;
+      Node* declarator = *i;
       m_vector.push_back(Member(declarator->get_str(), declarator->get_type()));
     }
   }
-  for(auto i: m_vector){
+  for(auto i : m_vector){
     s_type->add_member(i);
   }
   leave_scope();
 }
 
-void SemanticAnalysis::visit_binary_expression(Node *n) {
-  if(debug){puts("visit_binary_expression");}
+void SemanticAnalysis::visit_binary_expression(Node* n){
+  if(debug){ puts("visit_binary_expression"); }
 
   //Operator
   int tag = n->get_kid(0)->get_tag();
@@ -323,8 +323,7 @@ void SemanticAnalysis::visit_binary_expression(Node *n) {
         if(!comp_ptr(l_type, r_type)){
           SemanticError::raise(n->get_loc(), "Cannot assign (%s) to (%s)", r_type->as_str().c_str(), l_type->as_str().c_str());
         }
-      }
-      else{
+      } else{
         if(!is_convertible(l_type, r_type)){
           SemanticError::raise(n->get_loc(), "Cannot assign (%s) to (%s)", r_type->as_str().c_str(), l_type->as_str().c_str());
         }
@@ -350,10 +349,10 @@ void SemanticAnalysis::visit_binary_expression(Node *n) {
     case TOK_PLUS:{
       if(l_type->is_integral() && r_type->is_integral()){
         // n->set_type(l_type);
-      }else if(l_type->is_integral() && r_type->is_pointer()){
+      } else if(l_type->is_integral() && r_type->is_pointer()){
         // n->set_type(r_type);
-      }else if(r_type->is_integral() && l_type->is_pointer()){
-      }else{
+      } else if(r_type->is_integral() && l_type->is_pointer()){
+      } else{
         SemanticError::raise(n->get_loc(), "Cannot perform such binary operation");
       }
       break;
@@ -366,8 +365,8 @@ void SemanticAnalysis::visit_binary_expression(Node *n) {
   n->set_type(l_type);
 }
 
-void SemanticAnalysis::visit_unary_expression(Node *n) {
-  if(debug){puts("visit_unary_expression");}
+void SemanticAnalysis::visit_unary_expression(Node* n){
+  if(debug){ puts("visit_unary_expression"); }
   visit(n->get_kid(1));
   switch(n->get_kid(0)->get_tag()){
     case TOK_ASTERISK:{
@@ -400,27 +399,27 @@ void SemanticAnalysis::visit_unary_expression(Node *n) {
   }
 }
 
-void SemanticAnalysis::visit_postfix_expression(Node *n) {
-  if(debug){puts("visit_postfix_expression");}
+void SemanticAnalysis::visit_postfix_expression(Node* n){
+  if(debug){ puts("visit_postfix_expression"); }
 }
 
-void SemanticAnalysis::visit_conditional_expression(Node *n) {
-  if(debug){puts("visit_conditional_expression");}
+void SemanticAnalysis::visit_conditional_expression(Node* n){
+  if(debug){ puts("visit_conditional_expression"); }
 }
 
-void SemanticAnalysis::visit_cast_expression(Node *n) {
-  if(debug){puts("visit_cast_expression");}
+void SemanticAnalysis::visit_cast_expression(Node* n){
+  if(debug){ puts("visit_cast_expression"); }
 }
 
-void SemanticAnalysis::visit_function_call_expression(Node *n) {
-  if(debug){puts("visit_function_call_expression");}
+void SemanticAnalysis::visit_function_call_expression(Node* n){
+  if(debug){ puts("visit_function_call_expression"); }
   //func_name
   std::string func_name = n->get_kid(0)->get_kid(0)->get_str();
   //arg_list
-  Node *arg_list_node = n->get_kid(1);
+  Node* arg_list_node = n->get_kid(1);
   //# of args
   int arg_cnt = arg_list_node->get_num_kids();
-  Symbol *sym = m_cur_symtab->lookup_recursive_kind(func_name, SymbolKind::FUNCTION);
+  Symbol* sym = m_cur_symtab->lookup_recursive_kind(func_name, SymbolKind::FUNCTION);
   if(sym == nullptr){
     SemanticError::raise(n->get_loc(), "Function %s not declared/defined", func_name.c_str());
   }
@@ -429,7 +428,7 @@ void SemanticAnalysis::visit_function_call_expression(Node *n) {
     SemanticError::raise(n->get_loc(), "Function %s number of arguments does not match", func_name.c_str());
   }
   for(int i = 0; i < arg_cnt; i++){
-    Node *param = arg_list_node->get_kid(i);
+    Node* param = arg_list_node->get_kid(i);
     visit(param);
 
     if(!is_convertible(param->get_type(), func_type->get_member(i).get_type())){
@@ -440,8 +439,8 @@ void SemanticAnalysis::visit_function_call_expression(Node *n) {
   n->set_str(func_name);
 }
 
-void SemanticAnalysis::visit_field_ref_expression(Node *n) {
-  if(debug){puts("visit_field_ref_expression");}
+void SemanticAnalysis::visit_field_ref_expression(Node* n){
+  if(debug){ puts("visit_field_ref_expression"); }
   visit(n->get_kid(0));
   std::string l_name = n->get_kid(0)->get_str();
   // if(!m_cur_symtab->lookup_recursive_kind(l_name, SymbolKind::VARIABLE)){
@@ -466,8 +465,8 @@ void SemanticAnalysis::visit_field_ref_expression(Node *n) {
   SemanticError::raise(n->get_loc(), "%s not declared visit_field_ref_expression", r_name.c_str());
 }
 
-void SemanticAnalysis::visit_indirect_field_ref_expression(Node *n) {
-  if(debug){puts("visit_indirect_field_ref_expression");}
+void SemanticAnalysis::visit_indirect_field_ref_expression(Node* n){
+  if(debug){ puts("visit_indirect_field_ref_expression"); }
   //Initial checking
   visit(n->get_kid(0));
   std::string l_name = n->get_kid(0)->get_str();
@@ -495,8 +494,8 @@ void SemanticAnalysis::visit_indirect_field_ref_expression(Node *n) {
   SemanticError::raise(n->get_loc(), "%s not declared", l_name.c_str());
 }
 
-void SemanticAnalysis::visit_array_element_ref_expression(Node *n) {
-  if(debug){puts("visit_array_element_ref_expression");}
+void SemanticAnalysis::visit_array_element_ref_expression(Node* n){
+  if(debug){ puts("visit_array_element_ref_expression"); }
   visit(n->get_kid(0));
   visit(n->get_kid(1));
   //make sure the array index is numeric
@@ -509,10 +508,10 @@ void SemanticAnalysis::visit_array_element_ref_expression(Node *n) {
   n->set_type(n->get_kid(0)->get_type()->get_base_type());
 }
 
-void SemanticAnalysis::visit_variable_ref(Node *n) {
-  if(debug){puts("visit_variable_ref");}
+void SemanticAnalysis::visit_variable_ref(Node* n){
+  if(debug){ puts("visit_variable_ref"); }
   std::string name = n->get_kid(0)->get_str();
-  Symbol *v_symbol = m_cur_symtab->lookup_recursive(name);
+  Symbol* v_symbol = m_cur_symtab->lookup_recursive(name);
   if(!v_symbol){
     SemanticError::raise(n->get_loc(), "%s not declared", name.c_str());
   }
@@ -521,8 +520,8 @@ void SemanticAnalysis::visit_variable_ref(Node *n) {
   n->set_str(n->get_kid(0)->get_str());
 }
 
-void SemanticAnalysis::visit_literal_value(Node *n) {
-  if(debug){puts("visit_literal_value");}
+void SemanticAnalysis::visit_literal_value(Node* n){
+  if(debug){ puts("visit_literal_value"); }
   int tag = n->get_kid(0)->get_tag();
   LiteralValue result;
   std::string name = n->get_kid(0)->get_str();
@@ -554,41 +553,41 @@ void SemanticAnalysis::visit_literal_value(Node *n) {
   n->set_str(name);
 }
 
-void SemanticAnalysis::visit_return_expression_statement(Node *n){
-  if(debug){puts("visit_return_expression_statement");}
+void SemanticAnalysis::visit_return_expression_statement(Node* n){
+  if(debug){ puts("visit_return_expression_statement"); }
   visit(n->get_kid(0));
   if(!is_convertible(n->get_kid(0)->get_type(), m_cur_symtab->get_fn_type()->get_base_type())){
     SemanticError::raise(n->get_loc(), "Does not match function return type");
   }
-  
+  n->set_type(m_cur_symtab->get_fn_type()->get_base_type());
 }
 
-void SemanticAnalysis::visit_while_statement(Node *n){
-  if(debug){puts("visit_while_statement");}
+void SemanticAnalysis::visit_while_statement(Node* n){
+  if(debug){ puts("visit_while_statement"); }
   visit(n->get_kid(0));
   enter_scope();
   visit(n->get_kid(1));
   leave_scope();
 }
 
-void SemanticAnalysis::visit_do_while_statement(Node *n){
-  if(debug){puts("visit_do_while_statement");}
+void SemanticAnalysis::visit_do_while_statement(Node* n){
+  if(debug){ puts("visit_do_while_statement"); }
   enter_scope();
   visit(n->get_kid(0));
   leave_scope();
   visit(n->get_kid(1));
 }
 
-void SemanticAnalysis::visit_if_statement(Node *n){
-  if(debug){puts("visit_if_statement");}
+void SemanticAnalysis::visit_if_statement(Node* n){
+  if(debug){ puts("visit_if_statement"); }
   visit(n->get_kid(0));
   enter_scope();
   visit(n->get_kid(1));
   leave_scope();
 }
 
-void SemanticAnalysis::visit_for_statement(Node *n){
-  if(debug){puts("visit_for_statement");}
+void SemanticAnalysis::visit_for_statement(Node* n){
+  if(debug){ puts("visit_for_statement"); }
   enter_scope();
   visit(n->get_kid(0));
   visit(n->get_kid(1));
@@ -599,8 +598,8 @@ void SemanticAnalysis::visit_for_statement(Node *n){
   leave_scope();
 }
 
-void SemanticAnalysis::visit_if_else_statement(Node *n){
-  if(debug){puts("visit_if_else_statement");}
+void SemanticAnalysis::visit_if_else_statement(Node* n){
+  if(debug){ puts("visit_if_else_statement"); }
   visit(n->get_kid(0));
   enter_scope();
   visit(n->get_kid(1));
@@ -611,12 +610,12 @@ void SemanticAnalysis::visit_if_else_statement(Node *n){
 
 }
 
-void SemanticAnalysis::enter_scope() {
-  SymbolTable *scope = new SymbolTable(m_cur_symtab);
+void SemanticAnalysis::enter_scope(){
+  SymbolTable* scope = new SymbolTable(m_cur_symtab);
   m_cur_symtab = scope;
 }
 
-void SemanticAnalysis::leave_scope() {
+void SemanticAnalysis::leave_scope(){
   // SymbolTable *table = m_cur_symtab;
   m_cur_symtab = m_cur_symtab->get_parent();
   // delete(table);
@@ -624,16 +623,16 @@ void SemanticAnalysis::leave_scope() {
 }
 
 // recursively build type and bring child name to the nearest node
-std::string SemanticAnalysis::build_type(Node *n, std::shared_ptr<Type> &base_type){
+std::string SemanticAnalysis::build_type(Node* n, std::shared_ptr<Type>& base_type){
   while(1){
     int tag = n->get_tag();
     if(tag == AST_NAMED_DECLARATOR){
       return n->get_kid(0)->get_str();
-    }else if(tag == AST_ARRAY_DECLARATOR){
+    } else if(tag == AST_ARRAY_DECLARATOR){
       int size = stoi(n->get_kid(1)->get_str());
       std::shared_ptr<Type> base_added(new ArrayType(base_type, size));
       base_type = base_added;
-    }else if(tag == AST_POINTER_DECLARATOR){
+    } else if(tag == AST_POINTER_DECLARATOR){
       std::shared_ptr<Type> base_added(new PointerType(base_type));
       base_type = base_added;
     }
@@ -683,15 +682,15 @@ bool SemanticAnalysis::is_convertible(std::shared_ptr<Type> l, std::shared_ptr<T
   return false;
 }
 
-Node *SemanticAnalysis::promote_to_int(Node *n) {
+Node* SemanticAnalysis::promote_to_int(Node* n){
   assert(n->get_type()->is_integral());
   assert(n->get_type()->get_basic_type_kind() < BasicTypeKind::INT);
   std::shared_ptr<Type> type(new BasicType(BasicTypeKind::INT, n->get_type()->is_signed()));
   return implicit_conversion(n, type);
 }
 
-Node *SemanticAnalysis::implicit_conversion(Node *n, const std::shared_ptr<Type> &type) {
-  std::unique_ptr<Node> conversion(new Node(AST_IMPLICIT_CONVERSION, {n}));
+Node* SemanticAnalysis::implicit_conversion(Node* n, const std::shared_ptr<Type>& type){
+  std::unique_ptr<Node> conversion(new Node(AST_IMPLICIT_CONVERSION, { n }));
   conversion->set_type(type);
   return conversion.release();
 }

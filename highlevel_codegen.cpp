@@ -87,6 +87,44 @@ void HighLevelCodegen::visit_return_expression_statement(Node* n){
   // generate code to evaluate the expression
   visit(expr);
 
+  std::shared_ptr<Type> index_type = expr->get_type();
+  HighLevelOpcode code = HINS_nop;
+  int dif = (int)n->get_type()->get_basic_type_kind();
+  switch(index_type->get_basic_type_kind()){
+    case BasicTypeKind::CHAR:{
+      if(index_type->is_signed()){
+        dif += HINS_sconv_bw - 1;
+      } else{
+        dif += HINS_uconv_bw - 1;
+      }
+      break;
+    }
+    case BasicTypeKind::SHORT:{
+      if(index_type->is_signed()){
+        dif += HINS_sconv_wl - 1;
+      } else{
+        dif += HINS_uconv_wl - 1;
+      }
+      break;
+    }
+    case BasicTypeKind::INT:{
+      if(index_type->is_signed()){
+        dif += HINS_sconv_lq - 2;
+      } else{
+        dif += HINS_uconv_lq - 2;
+      }
+      break;
+    }
+    default: break;
+  }
+  code = (HighLevelOpcode)dif;
+
+  if(code != HINS_nop){
+    Operand temp = next_vr();
+    m_hl_iseq->append(new Instruction(code, temp, expr->get_op()));
+    expr->set_op(temp);
+    curVreg--;
+  }
   // move the computed value to the return value vreg
   HighLevelOpcode mov_opcode = get_opcode(HINS_mov_b, expr->get_type());
   m_hl_iseq->append(new Instruction(mov_opcode, Operand(Operand::VREG, 0), expr->get_op()));
@@ -430,8 +468,12 @@ void HighLevelCodegen::visit_literal_value(Node* n){
     std::string str_label = "_str" + std::to_string(n->get_vreg());
     m_hl_iseq->append(new Instruction(mov_opcode, dest, Operand(Operand::IMM_LABEL, str_label)));
     n->set_op(dest);
+  } else if(val.get_kind() == LiteralValueKind::CHARACTER){
+    HighLevelOpcode mov_opcode = get_opcode(HINS_mov_b, n->get_type());
+    m_hl_iseq->append(new Instruction(mov_opcode, dest, Operand(Operand::IMM_IVAL, val.get_char_value())));
+    n->set_op(dest);
   } else{
-    RuntimeError::raise("Shoudl not be reached. Please don't take more credits away from me please, hope you have a good day");
+    RuntimeError::raise("Should not be reached. Please don't take more credits away from me please, hope you have a good day");
   }
 }
 
