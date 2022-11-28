@@ -24,7 +24,6 @@ private:
   bool m_is_defined;
   int m_addr;
   unsigned vreg;
-  int highest_nomem;
 
   // value semantics prohibited
   Symbol(const Symbol&);

@@ -44,7 +44,6 @@ void LocalStorageAllocation::visit_function_definition(Node* n){
       i->set_vreg(m_next_vreg++);
     }
   }
-  n->get_symbol()->set_hn(m_next_vreg - 1);
   n->set_vreg(m_next_vreg);
   m_next_vreg = 10;
 }

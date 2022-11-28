@@ -14,7 +14,6 @@ Symbol::Symbol(SymbolKind kind, const std::string& name, const std::shared_ptr<T
   , m_is_defined(is_defined)
   , m_addr(-1)
   , vreg(0){
-  highest_nomem = 0;
 }
 
 Symbol::~Symbol(){
@@ -63,12 +62,6 @@ bool Symbol::is_defined() const{
 std::string Symbol::as_str(){
   std::string result = "Symbol name: " + get_name() + ", size: " + std::to_string(get_addr()) + ", vreg: " + std::to_string(get_vreg());
   return result;
-}
-void Symbol::set_hn(int hn){
-  highest_nomem = hn;
-}
-int Symbol::get_hn(){
-  return highest_nomem;
 }
 ////////////////////////////////////////////////////////////////////////
 // SymbolTable implementation
