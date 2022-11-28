@@ -126,7 +126,7 @@ void HighLevelCodegen::visit_return_expression_statement(Node* n){
     curVreg--;
   }
   // move the computed value to the return value vreg
-  HighLevelOpcode mov_opcode = get_opcode(HINS_mov_b, expr->get_type());
+  HighLevelOpcode mov_opcode = get_opcode(HINS_mov_b, index_type);
   m_hl_iseq->append(new Instruction(mov_opcode, Operand(Operand::VREG, 0), expr->get_op()));
 
   // jump to the return label
