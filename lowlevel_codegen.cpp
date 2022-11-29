@@ -429,7 +429,7 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
     ll_iseq->append(new Instruction(mov_opcode, sec_operand, first_operand));
     return;
   }
-  if(match_hl(HINS_cmplte_b, hl_opcode) || match_hl(HINS_cmplt_b, hl_opcode) || match_hl(HINS_cmpeq_b, hl_opcode) || match_hl(HINS_cmpgt_b, hl_opcode)){
+  if(match_hl(HINS_cmplte_b, hl_opcode) || match_hl(HINS_cmplt_b, hl_opcode) || match_hl(HINS_cmpeq_b, hl_opcode) || match_hl(HINS_cmpgt_b, hl_opcode) || match_hl(HINS_cmpgte_b, hl_opcode)){
     LowLevelOpcode cmp_opcode = select_ll_opcode(MINS_CMPB, size);
     LowLevelOpcode movzb_opcode = select_ll_opcode(MINS_MOVZBW, 1, size);
 
@@ -450,6 +450,8 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
       ll_iseq->append(new Instruction(MINS_SETE, r10b));
     } else if(match_hl(HINS_cmpgt_b, hl_opcode)){
       ll_iseq->append(new Instruction(MINS_SETG, r10b));
+    } else if(match_hl(HINS_cmpgte_b, hl_opcode)){
+      ll_iseq->append(new Instruction(MINS_SETGE, r10b));
     }
     ll_iseq->append(new Instruction(movzb_opcode, r10b, r11));
     ll_iseq->append(new Instruction(mov_opcode, r11, first_operand));
