@@ -88,7 +88,7 @@ void HighLevelCodegen::visit_return_expression_statement(Node* n){
   visit(expr);
 
   std::shared_ptr<Type> index_type = expr->get_type();
-  if(index_type->get_basic_type_kind() == n->get_type()->get_basic_type_kind())
+  if(are_same(index_type, n->get_type()))
     goto done;
   convert(n->get_type(), expr);
 done:
@@ -298,7 +298,7 @@ void HighLevelCodegen::visit_function_call_expression(Node* n){
 
     std::shared_ptr<Type> index_type = kid->get_type();
     std::shared_ptr<Type> type1 = func->get_member(i).get_type();
-    if(index_type->get_basic_type_kind() == type1->get_basic_type_kind())
+    if(are_same(index_type, type1))
       goto done;
     convert(type1, kid);
   done:
@@ -531,4 +531,25 @@ void HighLevelCodegen::convert(std::shared_ptr<Type> type1, Node* node2){
     node2->set_op(temp);
     curVreg--;
   }
+}
+bool HighLevelCodegen::are_same(std::shared_ptr<Type> type1, std::shared_ptr<Type> type2){
+  if(type1->as_str() == type2->as_str()){
+    return true;
+  }
+  if(type1->is_array() && type2->is_array()){
+    return type1->is_same(type2.get());
+  }
+  if(type1->is_basic() && type2->is_basic()){
+    return type1->is_same(type2.get());
+  }
+  if(type1->is_array() && type2->is_pointer()){
+    return are_same(type1->get_base_type(), type2->get_base_type());
+  }
+  if(type2->is_array() && type1->is_pointer()){
+    return are_same(type1->get_base_type(), type2->get_base_type());
+  }
+  if(type1->is_pointer() && type2->is_pointer()){
+    return type1->is_same(type2.get());
+  }
+  return false;
 }
