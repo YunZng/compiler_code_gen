@@ -20,8 +20,9 @@ void LocalStorageAllocation::visit_declarator_list(Node* n){
     // printf("kid: %s\nSymbol: %s\n", kid->get_str().c_str(), kid->get_symbol()->as_str().c_str());
     if(var_type->is_array()){
       kid->get_symbol()->set_addr(m_total_local_storage);
-      int siz = var_type->get_alignment();
-      m_malloc(siz, var_type->get_array_size());
+      int siz = var_type->get_array_size();
+      m_malloc(siz, var_type->get_base_type()->get_storage_size());
+      // printf("storage size %d\n", m_total_local_storage);
     } else if(var_type->is_struct()){
       kid->get_symbol()->set_addr(m_total_local_storage);
       int siz = var_type->get_storage_size();
@@ -75,7 +76,10 @@ void LocalStorageAllocation::visit_unary_expression(Node* n){
 void LocalStorageAllocation::visit_function_declaration(Node* n){}
 
 //do nothing function AGAIN hahahahahahaha
-void LocalStorageAllocation::visit_struct_type_definition(Node* n){}
+void LocalStorageAllocation::visit_struct_type_definition(Node* n){
+  printf("%s", debugg ? "lsa visit_struct_type_def\n" : "");
+
+}
 
 void LocalStorageAllocation::visit_literal_value(Node* n){
   printf("%s", debugg ? "lsa visit_literal_value\n" : "");

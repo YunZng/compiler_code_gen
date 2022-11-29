@@ -47,6 +47,7 @@ private:
   Operand op;
   unsigned vreg;
   std::shared_ptr<Type> m_func;
+  int addr;
   // copy ctor and assignment operator not supported
   NodeBase(const NodeBase&);
   NodeBase& operator=(const NodeBase&);
@@ -61,6 +62,8 @@ public:
   void set_lit(const std::shared_ptr<LiteralValue>& lit);
   void set_value_type(ValueType type);
   void set_op(Operand ope);
+  void set_addr(int);
+  int get_addr();
   Operand get_op() const;
   void set_vreg(unsigned);
   unsigned get_vreg() const;

@@ -346,9 +346,9 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
     ll_iseq->append(new Instruction(mov_opcode, sec_operand, first_operand));
     return;
   }
-  if(match_hl(HINS_div_b, hl_opcode)){
+  if(match_hl(HINS_div_b, hl_opcode) || match_hl(HINS_mod_b, hl_opcode)){
     LowLevelOpcode opcode;
-    if(hl_opcode == HINS_div_q){
+    if(hl_opcode == HINS_div_q || hl_opcode == HINS_mod_q){
       opcode = MINS_IDIVQ;
     } else{
       opcode = MINS_IDIVL;
@@ -369,6 +369,12 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
       movl - 24(% rbp), % r10d
       idivl% r10d
       movl% eax, -8(% rbp)
+
+      movl     -32(%rbp), %eax      mod_l    vr13, vr10, vr11
+      cdq
+      movl - 24(% rbp), % r10d
+      idivl% r10d
+      movl% edx, -8(% rbp)
     */
     return;
   }
@@ -493,6 +499,6 @@ Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode, int size, const std::
 
 /*
 
-alias back='cd ~/compilers/assign04-yulun/compiler_code_gen/'; alias test='cd ~/compilers/fall2022-tests/assign04/'; alias check='make clean; git pull origin main; make clean; make depend; make -j; test; ./run_all.rb'; export ASSIGN04_DIR=~/compilers/assign04-yulun/compiler_code_gen/;
+alias back='cd ~/compilers/assign04-yulun/compiler_code_gen/'; alias test='cd ~/compilers/fall2022-tests/assign04/'; alias check='back; make clean; git pull origin main; make clean; make depend; make -j; test; ./run_all.rb'; export ASSIGN04_DIR=~/compilers/assign04-yulun/compiler_code_gen/;
 
 */

@@ -221,6 +221,10 @@ void HighLevelCodegen::visit_binary_expression(Node* n){
       op_code = HINS_cmpneq_b;
       break;
     }
+    case TOK_MOD:{
+      op_code = HINS_mod_b;
+      break;
+    }
     default: RuntimeError::raise("should not reach here");
   }
   if(first.is_memref()){
@@ -327,7 +331,7 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
   Operand dest;
   Operand first(Operand::IMM_IVAL, addr);
   //size of each array element
-  Operand second(Operand::IMM_IVAL, arr->get_type()->get_base_type()->get_alignment());
+  Operand second(Operand::IMM_IVAL, arr->get_type()->get_base_type()->get_storage_size());
   Operand start_addr(Operand::VREG, arr->get_symbol()->get_vreg());
   //localaddr vr11, $0
   //This part is not necessary for array in a function call, since we don't know the address before hand
@@ -378,6 +382,9 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
   m_hl_iseq->append(new Instruction(get_opcode(HINS_add_b, arr->get_type()), dest, start_addr, second));
   //memory dereference
   n->set_op(dest.to_memref());
+  n->set_symbol(arr->get_symbol());
+  n->set_type(arr->get_type());
+  n->set_vreg(dest.get_base_reg());
 }
 
 void HighLevelCodegen::visit_variable_ref(Node* n){
@@ -402,24 +409,39 @@ void HighLevelCodegen::visit_variable_ref(Node* n){
 void HighLevelCodegen::visit_field_ref_expression(Node* n){
   printf("%s", debugs ? "hc visit_field_ref_expression\n" : "");
   std::string field_name = n->get_kid(1)->get_str();
+  visit(n->get_kid(0));
   Node* strt = n->get_kid(0);
   std::shared_ptr<Type> var_type = strt->get_type();
-  Operand dest(next_vr());
+  Operand dest;
+  // puts("<1>");
   Operand addr(Operand::IMM_IVAL, strt->get_symbol()->get_addr());
+  Operand zero(Operand::IMM_IVAL, 0);
+
+  // puts("<3>");
+
   Operand first;
 
   //First load address, later adjust with offset
-  m_hl_iseq->append(new Instruction(HINS_localaddr, dest, addr));
-  addr = dest;
-
+  // printf("var type %s\n", var_type->as_str().c_str());
+  if(var_type->is_array()){
+    var_type = var_type->get_base_type();
+  } else{
+    dest = next_vr();
+    m_hl_iseq->append(new Instruction(HINS_localaddr, dest, addr));
+    addr = dest;
+  }
+  // printf("type to str: %s\n", var_type->as_str().c_str());
   int offset = get_offset(var_type, field_name);
+  // puts("<2>");
+
   dest = next_vr();
   first = Operand(Operand::IMM_IVAL, offset);
   //adjust addr with offset
   //offset is always signed int imm_ival, so auto the following are all _q
   m_hl_iseq->append(new Instruction(HINS_mov_q, dest, first));
   first = dest;
-  m_hl_iseq->append(new Instruction(HINS_add_q, dest, addr, first));
+  Operand last_reg(Operand::VREG, strt->get_vreg());
+  m_hl_iseq->append(new Instruction(HINS_add_q, dest, last_reg, first));
   n->set_op(dest.to_memref());
 }
 

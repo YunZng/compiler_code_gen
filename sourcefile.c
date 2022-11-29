@@ -1,16 +1,11 @@
-// test for an integer promotion
-
 void print_i32(int n);
 void print_nl(void);
-void a(int b, int c, int d){
-  print_nl();
-}
+
+struct Point{
+  int x, y;
+};
 
 int main(void){
-  char c;
-  c = -67;
-  print_i32(c);
-  print_nl();
-  a(1, 2, 3);
+  struct Point points[3];
   return 0;
 }

@@ -28,6 +28,7 @@ NodeBase::NodeBase(){
   m_lit = nullptr;
   vreg = 0;
   m_func = nullptr;
+  addr = 0;
 }
 
 NodeBase::~NodeBase(){
@@ -39,7 +40,7 @@ void NodeBase::set_symbol(Symbol* symbol){
 }
 
 void NodeBase::set_type(const std::shared_ptr<Type>& type){
-  assert(!m_type);
+  // assert(!m_type);
   m_type = type;
 }
 
@@ -79,7 +80,7 @@ std::shared_ptr<Type> NodeBase::get_type() const{
   // associated with this node
 
   if(has_symbol())
-    return m_symbol->get_type(); // Symbol will definitely have a valid Type
+    return m_type; // Symbol will definitely have a valid Type
   else{
     assert(m_type); // make sure a Type object actually exists
     return m_type;
@@ -100,4 +101,12 @@ Operand NodeBase::get_op() const{
 
 std::shared_ptr<LiteralValue> NodeBase::get_lit() const{
   return m_lit;
+}
+
+void NodeBase::set_addr(int addr1){
+  addr = addr1;
+}
+
+int NodeBase::get_addr(){
+  return addr;
 }
