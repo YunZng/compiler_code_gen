@@ -263,10 +263,10 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
 
   int size = highlevel_opcode_get_source_operand_size(hl_opcode);
   Operand first_operand = get_ll_operand(hl_ins->get_operand(0), size, ll_iseq);
+  Operand zero(Operand::IMM_IVAL, 0);
+
   if(hl_opcode == HINS_cjmp_t || hl_opcode == HINS_cjmp_f){
     label = hl_ins->get_operand(1);
-    Operand zero(Operand::IMM_IVAL, 0);
-
     ll_iseq->append(new Instruction(MINS_CMPL, zero, first_operand));
     ll_iseq->append(new Instruction(MINS_JNE - (hl_opcode - HINS_cjmp_t), label));
     return;
@@ -359,6 +359,17 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
     ll_iseq->append(new Instruction(mov_opcode, sec_operand, r10));
     ll_iseq->append(new Instruction(opcode, trd_operand, r10));
     ll_iseq->append(new Instruction(mov_opcode, r10, first_operand));
+    return;
+  }
+  if(match_hl(HINS_neg_b, hl_opcode)){
+    if(sec_operand.is_memref() && first_operand.is_memref()){
+      ll_iseq->append(new Instruction(mov_opcode, sec_operand, r10));
+      sec_operand = r10;
+    }
+    LowLevelOpcode sub = select_ll_opcode(MINS_SUBB, size);
+    // ll_iseq->append(new Instruction(mov_opcode, sec_operand, r10));
+    ll_iseq->append(new Instruction(mov_opcode, zero, first_operand));
+    ll_iseq->append(new Instruction(sub, r10, first_operand));
     return;
   }
   if(match_hl(HINS_add_b, hl_opcode) || match_hl(HINS_sub_b, hl_opcode)){
