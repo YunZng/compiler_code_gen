@@ -42,7 +42,7 @@ void HighLevelCodegen::visit_function_definition(Node* n){
   imVreg = curVreg;
   std::string fn_name = n->get_kid(1)->get_str();
   m_return_label_name = ".L" + fn_name + "_return";
-
+  // puts("1jk");
   unsigned total_local_storage = n->get_symbol()->get_addr();
   /*
     total_local_storage = n->get_total_local_storage();
@@ -56,6 +56,7 @@ void HighLevelCodegen::visit_function_definition(Node* n){
     visit_variable_ref(param);
     Operand first = param->get_op();
     Operand second(Operand::VREG, argVreg++);
+    // puts("9jk");
     m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, param->get_type()), first, second));
   }
   // reset arg register
@@ -403,7 +404,10 @@ void HighLevelCodegen::visit_variable_ref(Node* n){
       op = op.to_memref();
     }
   }
+
+  // puts("4jk");
   n->set_op(op);
+  n->set_type(n->get_symbol()->get_type());
 }
 
 void HighLevelCodegen::visit_field_ref_expression(Node* n){
