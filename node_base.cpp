@@ -27,6 +27,7 @@ NodeBase::NodeBase(){
   value_type = NORMAL;
   m_lit = nullptr;
   vreg = 0;
+  m_func = nullptr;
 }
 
 NodeBase::~NodeBase(){
@@ -34,14 +35,16 @@ NodeBase::~NodeBase(){
 
 void NodeBase::set_symbol(Symbol* symbol){
   assert(!has_symbol());
-  // assert(m_type == nullptr);
   m_symbol = symbol;
 }
 
 void NodeBase::set_type(const std::shared_ptr<Type>& type){
-  // assert(!has_symbol());
   assert(!m_type);
   m_type = type;
+}
+
+void NodeBase::set_func(const std::shared_ptr<Type>& type){
+  m_func = type;
 }
 
 void NodeBase::set_lit(const std::shared_ptr<LiteralValue>& lit){
@@ -81,6 +84,10 @@ std::shared_ptr<Type> NodeBase::get_type() const{
     assert(m_type); // make sure a Type object actually exists
     return m_type;
   }
+}
+
+std::shared_ptr<Type> NodeBase::get_func() const{
+  return m_func;
 }
 
 ValueType NodeBase::get_value_type() const{

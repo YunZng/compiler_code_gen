@@ -46,6 +46,7 @@ private:
   ValueType value_type;
   Operand op;
   unsigned vreg;
+  std::shared_ptr<Type> m_func;
   // copy ctor and assignment operator not supported
   NodeBase(const NodeBase&);
   NodeBase& operator=(const NodeBase&);
@@ -56,6 +57,7 @@ public:
 
   void set_symbol(Symbol* symbol);
   void set_type(const std::shared_ptr<Type>& type);
+  void set_func(const std::shared_ptr<Type>& type);
   void set_lit(const std::shared_ptr<LiteralValue>& lit);
   void set_value_type(ValueType type);
   void set_op(Operand ope);
@@ -66,6 +68,7 @@ public:
   Symbol* get_symbol() const;
   std::shared_ptr<Type> get_type() const;
   std::shared_ptr<LiteralValue> get_lit() const;
+  std::shared_ptr<Type> get_func() const;
   ValueType get_value_type() const;
 };
 

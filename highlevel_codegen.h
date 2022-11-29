@@ -48,4 +48,5 @@ private:
   std::string next_label();
   Operand next_vr();
   int get_offset(std::shared_ptr<Type>, std::string);
+  void convert(std::shared_ptr<Type> type1, Node* node2);
 };

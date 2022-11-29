@@ -436,6 +436,7 @@ void SemanticAnalysis::visit_function_call_expression(Node* n){
     }
   }
   n->set_type(func_type->get_base_type());
+  n->set_func(func_type);
   n->set_str(func_name);
 }
 

@@ -88,45 +88,9 @@ void HighLevelCodegen::visit_return_expression_statement(Node* n){
   visit(expr);
 
   std::shared_ptr<Type> index_type = expr->get_type();
-  int dif = (int)n->get_type()->get_basic_type_kind();
-  HighLevelOpcode code = HINS_nop;
   if(index_type->get_basic_type_kind() == n->get_type()->get_basic_type_kind())
     goto done;
-  switch(index_type->get_basic_type_kind()){
-    case BasicTypeKind::CHAR:{
-      if(index_type->is_signed()){
-        dif += HINS_sconv_bw - 1;
-      } else{
-        dif += HINS_uconv_bw - 1;
-      }
-      break;
-    }
-    case BasicTypeKind::SHORT:{
-      if(index_type->is_signed()){
-        dif += HINS_sconv_wl - 1;
-      } else{
-        dif += HINS_uconv_wl - 1;
-      }
-      break;
-    }
-    case BasicTypeKind::INT:{
-      if(index_type->is_signed()){
-        dif += HINS_sconv_lq - 2;
-      } else{
-        dif += HINS_uconv_lq - 2;
-      }
-      break;
-    }
-    default: break;
-  }
-  code = (HighLevelOpcode)dif;
-
-  if(code != HINS_nop){
-    Operand temp = next_vr();
-    m_hl_iseq->append(new Instruction(code, temp, expr->get_op()));
-    expr->set_op(temp);
-    curVreg--;
-  }
+  convert(n->get_type(), expr);
 done:
   // move the computed value to the return value vreg
   HighLevelOpcode mov_opcode = get_opcode(HINS_mov_b, n->get_type());
@@ -284,7 +248,18 @@ void HighLevelCodegen::visit_unary_expression(Node* n){
   Operand dest = Operand(Operand::VREG, curVreg);
   Operand first;
   Node* var = n->get_kid(1);
+  visit(var);
   switch(tag){
+    case TOK_MINUS:{
+      dest = next_vr();
+      if(var->get_lit()){
+        first = Operand(Operand::IMM_IVAL, var->get_lit()->get_int_value());
+      } else{
+        first = var->get_op();
+      }
+      m_hl_iseq->append(new Instruction(get_opcode(HINS_neg_b, var->get_type()), dest, first));
+      break;
+    }
     case TOK_ASTERISK:{
       visit(var);
       // if p of *p is already a pointer and p->get_op is memref, then we need to do extra work to store memref somewhere
@@ -315,12 +290,21 @@ void HighLevelCodegen::visit_function_call_expression(Node* n){
   printf("%s", debugs ? "hc visit_function_call_expression\n" : "");
   //arg passing
   Node* arg_list = n->get_kid(1);
+  std::shared_ptr<Type> func = n->get_func();
   for(int i = 0; i < arg_list->get_num_kids(); i++){
     Node* kid = arg_list->get_kid(i);
     visit(kid);
+
+
+    std::shared_ptr<Type> index_type = kid->get_type();
+    std::shared_ptr<Type> type1 = func->get_member(i).get_type();
+    if(index_type->get_basic_type_kind() == type1->get_basic_type_kind())
+      goto done;
+    convert(type1, kid);
+  done:
     Operand first = kid->get_op();
     Operand second(Operand::VREG, argVreg++);
-    m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, kid->get_type()), second, first));
+    m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, type1), second, first));
   }
   // reset arg register
   argVreg = 1;
@@ -504,3 +488,47 @@ int HighLevelCodegen::get_offset(std::shared_ptr<Type> var_type, std::string fie
   return offset;
 }
 
+//convert from node2 to node1
+void HighLevelCodegen::convert(std::shared_ptr<Type> type1, Node* node2){
+
+  // Node* expr = n->get_kid(0);
+  std::shared_ptr<Type> index_type = node2->get_type();
+  int dif = (int)type1->get_basic_type_kind();
+  HighLevelOpcode code = HINS_nop;
+
+  switch(index_type->get_basic_type_kind()){
+    case BasicTypeKind::CHAR:{
+      if(index_type->is_signed()){
+        dif += HINS_sconv_bw - 1;
+      } else{
+        dif += HINS_uconv_bw - 1;
+      }
+      break;
+    }
+    case BasicTypeKind::SHORT:{
+      if(index_type->is_signed()){
+        dif += HINS_sconv_wl - 1;
+      } else{
+        dif += HINS_uconv_wl - 1;
+      }
+      break;
+    }
+    case BasicTypeKind::INT:{
+      if(index_type->is_signed()){
+        dif += HINS_sconv_lq - 2;
+      } else{
+        dif += HINS_uconv_lq - 2;
+      }
+      break;
+    }
+    default: break;
+  }
+  code = (HighLevelOpcode)dif;
+
+  if(code != HINS_nop){
+    Operand temp = next_vr();
+    m_hl_iseq->append(new Instruction(code, temp, node2->get_op()));
+    node2->set_op(temp);
+    curVreg--;
+  }
+}
