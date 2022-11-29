@@ -347,7 +347,12 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
     return;
   }
   if(match_hl(HINS_mul_b, hl_opcode)){
-    LowLevelOpcode opcode = MINS_IMULQ;
+    LowLevelOpcode opcode;
+    if(hl_opcode == HINS_mul_q){
+      opcode = MINS_IMULQ;
+    } else{
+      opcode = MINS_IMULL;
+    }
 
     Operand trd_operand = get_ll_operand(hl_ins->get_operand(2), size, ll_iseq);
 
