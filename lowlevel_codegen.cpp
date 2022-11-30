@@ -354,13 +354,18 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
       opcode = MINS_IDIVL;
     }
     Operand trd_operand = get_ll_operand(hl_ins->get_operand(2), size, ll_iseq);
-    Operand rax(select_mreg_kind(size), MREG_RAX);
 
+    Operand rax(select_mreg_kind(size), MREG_RAX);
+    Operand rdx(select_mreg_kind(size), MREG_RDX);
+    if(match_hl(HINS_div_b, hl_opcode)){
+      rdx = rax;
+    }
     ll_iseq->append(new Instruction(mov_opcode, sec_operand, rax));
     ll_iseq->append(new Instruction(MINS_CDQ));
     ll_iseq->append(new Instruction(mov_opcode, trd_operand, r10));
     ll_iseq->append(new Instruction(opcode, r10));
-    ll_iseq->append(new Instruction(mov_opcode, rax, first_operand));
+
+    ll_iseq->append(new Instruction(mov_opcode, rdx, first_operand));
 
 
     /*
