@@ -35,7 +35,7 @@ HighLevelCodegen::HighLevelCodegen(int next_label_num)
 HighLevelCodegen::~HighLevelCodegen(){
 }
 
-int debugs = 0;
+int debugs = 1;
 void HighLevelCodegen::visit_function_definition(Node* n){
   printf("%s", debugs ? "hc visit_function_definition\n" : "");
   // generate the name of the label that return instructions should target
@@ -413,7 +413,7 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
   //adjust address with offset
   second = dest;
   dest = next_vr();
-  if(arr->get_symbol()->get_type()->is_array()){
+  if(arr->get_type()->is_array()){
     start_addr = arr->get_op();
   }
   m_hl_iseq->append(new Instruction(get_opcode(HINS_add_b, arr->get_type()), dest, start_addr, second));
