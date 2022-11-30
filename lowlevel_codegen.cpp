@@ -274,7 +274,7 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
   if(hl_opcode == HINS_localaddr){
     int sec_operand = hl_ins->get_operand(1).get_imm_ival();
     Operand r10(Operand::MREG64, MREG_R10); // r10 
-    int addr = sec_operand * 8 + mem_addr;
+    int addr = (sec_operand + 1) * 8 + mem_addr;
     // printf("vreg all %d\n", addr);
     Operand rbp(Operand::MREG64_MEM_OFF, MREG_RBP, addr);
 
@@ -367,20 +367,6 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
 
     ll_iseq->append(new Instruction(mov_opcode, rdx, first_operand));
 
-
-    /*
-      movl     -32(%rbp), %eax     div_l    vr13, vr10, vr11
-      cdq
-      movl - 24(% rbp), % r10d
-      idivl% r10d
-      movl% eax, -8(% rbp)
-
-      movl     -32(%rbp), %eax      mod_l    vr13, vr10, vr11
-      cdq
-      movl - 24(% rbp), % r10d
-      idivl% r10d
-      movl% edx, -8(% rbp)
-    */
     return;
   }
   if(match_hl(HINS_mul_b, hl_opcode)){
