@@ -262,7 +262,7 @@ void HighLevelCodegen::visit_binary_expression(Node* n){
   }
   Operand dest(next_vr());
   m_hl_iseq->append(new Instruction(get_opcode(op_code, n->get_kid(1)->get_type()), dest, first, second));
-  curVreg = imVreg;
+  // curVreg = imVreg;
   n->set_op(dest);
 }
 
@@ -363,20 +363,7 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
     // puts("fuck u");
   } else if(arr->get_tag() == AST_FIELD_REF_EXPRESSION){
     start_addr = Operand(Operand::VREG, arr->get_op().get_base_reg());
-    // puts("no symbol wa");
-    // printf("%s\n", arr->get_type()->as_str().c_str());
-    // addr = arr->get_type()->get_storage_size();
-    /*
-    mov_l    vr14, $0
-    sconv_lq vr15, vr14
-    mul_q    vr16, vr15, $1
-    add_q    vr17, vr13, vr16
-    */
-    // addr = 2222;
-    // return;
   }
-  visit(index);
-
   Operand dest;
   Operand first(Operand::IMM_IVAL, addr);
   //size of each array element
@@ -393,40 +380,44 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
     m_hl_iseq->append(new Instruction(HINS_localaddr, dest, first));
     start_addr = dest;
   }
+  visit(index);
+
   //find offset (mul_b offset index siz)
-  dest = next_vr();
-  first = index->get_op();
   std::shared_ptr<Type> index_type = index->get_type();
-  HighLevelOpcode code = HINS_nop;
-  switch(index_type->get_basic_type_kind()){
-    case BasicTypeKind::CHAR:{
-      code = HINS_uconv_bq;
-      if(index_type->is_signed()){
-        code = HINS_sconv_bq;
-      }
-      break;
-    }
-    case BasicTypeKind::SHORT:{
-      code = HINS_uconv_wq;
-      if(index_type->is_signed()){
-        code = HINS_sconv_wq;
-      }
-      break;
-    }
-    case BasicTypeKind::INT:{
-      code = HINS_uconv_lq;
-      if(index_type->is_signed()){
-        code = HINS_sconv_lq;
-      }
-      break;
-    }
-    default: break;
-  }
-  if(code != HINS_nop){
-    m_hl_iseq->append(new Instruction(code, dest, first));
-    first = dest;
-    dest = next_vr();
-  }
+  // HighLevelOpcode code = HINS_nop;
+  convert(index_type, index);
+  first = index->get_op();
+
+  // switch(index_type->get_basic_type_kind()){
+  //   case BasicTypeKind::CHAR:{
+  //     code = HINS_uconv_bq;
+  //     if(index_type->is_signed()){
+  //       code = HINS_sconv_bq;
+  //     }
+  //     break;
+  //   }
+  //   case BasicTypeKind::SHORT:{
+  //     code = HINS_uconv_wq;
+  //     if(index_type->is_signed()){
+  //       code = HINS_sconv_wq;
+  //     }
+  //     break;
+  //   }
+  //   case BasicTypeKind::INT:{
+  //     code = HINS_uconv_lq;
+  //     if(index_type->is_signed()){
+  //       code = HINS_sconv_lq;
+  //     }
+  //     break;
+  //   }
+  //   default: break;
+  // }
+  // if(code != HINS_nop){
+  //   m_hl_iseq->append(new Instruction(code, dest, first));
+  //   first = dest;
+  //   dest = next_vr();
+  // }
+  dest = next_vr();
   m_hl_iseq->append(new Instruction(get_opcode(HINS_mul_b, arr->get_type()), dest, first, second));
   //adjust address with offset
   second = dest;
@@ -616,6 +607,7 @@ void HighLevelCodegen::convert(std::shared_ptr<Type> type1, Node* node2){
   code = (HighLevelOpcode)dif;
 
   if(code != HINS_nop){
+    curVreg = std::max((int)curVreg, node2->get_op().get_base_reg()) + 1;
     Operand temp = next_vr();
     m_hl_iseq->append(new Instruction(code, temp, node2->get_op()));
     node2->set_op(temp);

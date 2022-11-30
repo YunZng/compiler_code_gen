@@ -1,14 +1,23 @@
+
 int main(void){
-  int i, n, sum;
+  long a[100], b[100], c[100];
+  int M;
+  int i, j, k;
+  long r, val;
 
-  i = 1;
-  n = 11;
-  sum = 0;
+  // M = 10;
 
-  do{
-    sum = sum + i;
-    i = i + 1;
-  } while(i < n);
+  // do the matrix multiplication: note that the
+  // loops are structured to avoid iterating over a column
+  // of elements and incurring excessive cache misses
+  // as a result
+  val = c[i * M + i];
+  // for(k = 0; k < M; k = k + 1){
+  //   for(i = 0; i < M; i = i + 1){
+  //     for(j = 0; j < M; j = j + 1){
+  //     }
+  //   }
+  // }
 
-  return sum;
+  return 0;
 }
