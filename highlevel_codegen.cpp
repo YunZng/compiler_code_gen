@@ -321,6 +321,7 @@ void HighLevelCodegen::visit_function_call_expression(Node* n){
     m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, n->get_type()), rax, Operand(Operand::VREG, 0)));
     n->set_op(rax);
   }
+  curVreg = imVreg;
 }
 
 void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
