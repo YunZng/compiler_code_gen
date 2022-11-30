@@ -57,6 +57,9 @@ void SemanticAnalysis::visit_variable_declaration(Node* n){
 
     declarator->set_type(base_type1);
     declarator->set_symbol(m_cur_symtab->declare(SymbolKind::VARIABLE, name, base_type1));
+    if(m_cur_symtab->get_is_struct()){
+      m_cur_symtab->lookup_local((const std::string)name)->set_from_struct(true);
+    }
     declarator->set_str(name);
   }
 }
@@ -276,6 +279,7 @@ void SemanticAnalysis::visit_struct_type_definition(Node* n){
   std::vector<Member> m_vector;
   //AST_FIELD_DEFINITION_LIST
   enter_scope();
+  m_cur_symtab->set_is_struct(true);
   Node* decl_list = n->get_kid(1);
   for(auto i = decl_list->cbegin(); i != decl_list->cend(); ++i){
     Node* ast_var_dec = *i;

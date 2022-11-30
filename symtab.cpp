@@ -14,11 +14,19 @@ Symbol::Symbol(SymbolKind kind, const std::string& name, const std::shared_ptr<T
   , m_is_defined(is_defined)
   , m_addr(-1)
   , vreg(0){
+  from_struct = false;
 }
 
 Symbol::~Symbol(){
 }
 
+
+void Symbol::set_from_struct(bool a){
+  from_struct = a;
+}
+bool Symbol::get_from_struct(){
+  return from_struct;
+}
 void Symbol::set_is_defined(bool is_defined){
   m_is_defined = is_defined;
 }
@@ -71,6 +79,7 @@ SymbolTable::SymbolTable(SymbolTable* parent)
   : m_parent(parent)
   , m_has_params(false){
   m_fn_type = nullptr;
+  is_struct = false;
 }
 
 SymbolTable::~SymbolTable(){
@@ -79,6 +88,12 @@ SymbolTable::~SymbolTable(){
   }
 }
 
+bool SymbolTable::get_is_struct(){
+  return is_struct;
+}
+void SymbolTable::set_is_struct(bool a){
+  is_struct = a;
+}
 SymbolTable* SymbolTable::get_parent() const{
   return m_parent;
 }

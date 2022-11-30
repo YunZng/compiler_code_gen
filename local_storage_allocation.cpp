@@ -41,7 +41,7 @@ void LocalStorageAllocation::visit_function_definition(Node* n){
   n->get_symbol()->set_addr(m_total_local_storage);
   // set register for every symbol
   for(auto i : m_sym){
-    if(i->get_addr() == -1 && !i->get_vreg()){
+    if(i->get_addr() == -1 && !i->get_vreg() && !i->get_from_struct()){
       i->set_vreg(m_next_vreg++);
     }
   }

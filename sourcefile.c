@@ -1,3 +1,7 @@
+void print_str(const char* s);
+void print_nl(void);
+void print_i32(int n);
+
 struct Person{
   char name[20];
   int age;
@@ -5,8 +9,6 @@ struct Person{
 
 int main(void){
   struct Person p;
-  int a[2];
-  // a[1] = 0;
-  p.name[3] = 'A';
+  p.name[0] = 'A';
   return 0;
 }

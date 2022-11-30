@@ -13,12 +13,13 @@ namespace{
 
   // Adjust an opcode for a basic type
   HighLevelOpcode get_opcode(HighLevelOpcode base_opcode, const std::shared_ptr<Type>& type){
-    if(type->is_basic())
+    if(type->is_basic()){
       return static_cast<HighLevelOpcode>(int(base_opcode) + int(type->get_basic_type_kind()));
-    else if(type->is_pointer())
+    } else if(type->is_pointer()){
       return static_cast<HighLevelOpcode>(int(base_opcode) + int(BasicTypeKind::LONG));
-    else
+    } else{
       RuntimeError::raise("attempt to use type '%s' as data in opcode selection", type->as_str().c_str());
+    }
   }
 
 }
@@ -178,7 +179,13 @@ void HighLevelCodegen::visit_binary_expression(Node* n){
   HighLevelOpcode op_code;
   switch(n->get_kid(0)->get_tag()){
     case TOK_ASSIGN:{
-      m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, n->get_kid(1)->get_type()), first, second));
+      std::shared_ptr<Type> type1 = n->get_kid(1)->get_type();
+      std::shared_ptr<Type> type2 = n->get_kid(2)->get_type();
+      if(type1->is_array() && is_convertible(type1->get_base_type(), type2)){
+        type1 = type1->get_base_type();
+      }
+      m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, type1), first, second));
+      // printf("assigned %s\n", n->get_kid(1)->get_type()->as_str().c_str());
       curVreg = imVreg;
       return;
     }
@@ -510,6 +517,7 @@ void HighLevelCodegen::visit_literal_value(Node* n){
   } else{
     RuntimeError::raise("Should not be reached. Please don't take more credits away from me please, hope you have a good day");
   }
+  // printf("the shit is %s\n ", n->get_type()->as_str().c_str());
 }
 
 std::string HighLevelCodegen::next_label(){
@@ -598,6 +606,24 @@ bool HighLevelCodegen::are_same(std::shared_ptr<Type> type1, std::shared_ptr<Typ
   }
   if(type1->is_pointer() && type2->is_pointer()){
     return type1->is_same(type2.get());
+  }
+  return false;
+}
+bool HighLevelCodegen::is_convertible(std::shared_ptr<Type> l, std::shared_ptr<Type> r){
+  if(l->is_same(r.get())){
+    return true;
+  }
+  if(l->is_integral() && r->is_integral()){
+    return true;
+  }
+  if(l->is_array() && r->is_array() && (is_convertible(l->get_base_type(), r->get_base_type()))){
+    return true;
+  }
+  if(l->is_array() && r->is_pointer() && (is_convertible(l->get_base_type(), r->get_base_type()))){
+    return true;
+  }
+  if(l->is_pointer() && r->is_array() && (is_convertible(l->get_base_type(), r->get_base_type()))){
+    return true;
   }
   return false;
 }

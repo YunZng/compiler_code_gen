@@ -24,6 +24,7 @@ private:
   bool m_is_defined;
   int m_addr;
   unsigned vreg;
+  bool from_struct;
 
   // value semantics prohibited
   Symbol(const Symbol&);
@@ -39,6 +40,7 @@ public:
   void set_is_defined(bool is_defined);
   void set_addr(int addr);
   void set_vreg(unsigned r);
+  void set_from_struct(bool);
 
   SymbolKind get_kind() const;
   const std::string& get_name() const;
@@ -50,6 +52,7 @@ public:
   std::string as_str();
   void set_hn(int hn);
   int get_hn();
+  bool get_from_struct();
 
 };
 
@@ -60,6 +63,7 @@ private:
   std::map<std::string, unsigned> m_lookup;
   bool m_has_params; // true if this symbol table contains function parameters
   std::shared_ptr<Type> m_fn_type; // this is set to the type of the enclosing function (if any)
+  bool is_struct;
 
   // value semantics prohibited
   SymbolTable(const SymbolTable&);
@@ -103,6 +107,8 @@ public:
   // a return statement, to make sure that the value returned is
   // assignment-compatible with the function's return type.
   const Type* get_fn_type() const;
+  bool get_is_struct();
+  void set_is_struct(bool);
 
 private:
   void add_symbol(Symbol* sym);
