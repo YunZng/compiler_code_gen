@@ -145,7 +145,7 @@ void HighLevelCodegen::visit_if_statement(Node* n){
   // cond
   visit(n->get_kid(0));
   // if false, don't reach body, jump to label
-  m_hl_iseq->append(new Instruction(HINS_cjmp_f, Operand(Operand::VREG, curVreg), Operand(Operand::LABEL, body_label)));
+  m_hl_iseq->append(new Instruction(HINS_cjmp_f, n->get_kid(0)->get_op(), Operand(Operand::LABEL, body_label)));
   // body
   visit(n->get_kid(1));
   m_hl_iseq->define_label(body_label);
@@ -158,7 +158,7 @@ void HighLevelCodegen::visit_if_else_statement(Node* n){
   // cond
   visit(n->get_kid(0));
   // if false, jump to label for else
-  m_hl_iseq->append(new Instruction(HINS_cjmp_f, Operand(Operand::VREG, curVreg), Operand(Operand::LABEL, else_label)));
+  m_hl_iseq->append(new Instruction(HINS_cjmp_f, n->get_kid(0)->get_op(), Operand(Operand::LABEL, else_label)));
   // true body
   visit(n->get_kid(1));
   m_hl_iseq->append(new Instruction(HINS_jmp, Operand(Operand::LABEL, after_else_label)));
