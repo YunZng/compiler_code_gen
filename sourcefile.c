@@ -10,5 +10,8 @@ struct Person{
 int main(void){
   struct Person p;
   p.name[0] = 'A';
+  const char* s;
+  s = p.name;
+
   return 0;
 }

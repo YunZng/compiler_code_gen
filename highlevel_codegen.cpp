@@ -184,6 +184,9 @@ void HighLevelCodegen::visit_binary_expression(Node* n){
       if(type1->is_array() && is_convertible(type1->get_base_type(), type2)){
         type1 = type1->get_base_type();
       }
+      if(type2->is_array()){
+        second = Operand(Operand::VREG, n->get_kid(2)->get_vreg());
+      }
       m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, type1), first, second));
       // printf("assigned %s\n", n->get_kid(1)->get_type()->as_str().c_str());
       curVreg = imVreg;
@@ -476,6 +479,7 @@ void HighLevelCodegen::visit_field_ref_expression(Node* n){
   Operand last_reg(Operand::VREG, strt->get_vreg());
   m_hl_iseq->append(new Instruction(HINS_add_q, dest, last_reg, first));
   n->set_op(dest.to_memref());
+  n->set_vreg(dest.get_base_reg());
 }
 
 void HighLevelCodegen::visit_indirect_field_ref_expression(Node* n){
