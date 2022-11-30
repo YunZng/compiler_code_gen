@@ -189,7 +189,7 @@ void HighLevelCodegen::visit_binary_expression(Node* n){
           type1 = n->get_kid(1)->get_type();
         };
       }
-      printf("assigned %s\n", type1->as_str().c_str());
+      // printf("assigned %s\n", type1->as_str().c_str());
 
       if(type2->is_array()){
         second = Operand(Operand::VREG, n->get_kid(2)->get_vreg());
@@ -315,14 +315,14 @@ void HighLevelCodegen::visit_function_call_expression(Node* n){
   for(int i = 0; i < arg_list->get_num_kids(); i++){
     Node* kid = arg_list->get_kid(i);
     visit(kid);
-    puts("312");
+    // puts("312");
     std::shared_ptr<Type> index_type = kid->get_type();
     std::shared_ptr<Type> type1 = func->get_member(i).get_type();
     if(are_same(index_type, type1))
       goto done;
     convert(type1, kid);
   done:
-    puts("319");
+    // puts("319");
 
     Operand first = kid->get_op();
     Operand second(Operand::VREG, argVreg++);
