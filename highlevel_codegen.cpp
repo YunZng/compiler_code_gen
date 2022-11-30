@@ -346,6 +346,8 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
   Node* arr = n->get_kid(0);
   Node* index = n->get_kid(1);
   visit(arr);
+  // printf("who are tf you again %s\n", arr->get_type()->as_str().c_str());
+  // printf("n type %s\n", n->get_type()->as_str().c_str());
   // puts("done visit");
   //if array allocated, size will be ≥0
   int addr;
@@ -375,10 +377,11 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
   Operand first(Operand::IMM_IVAL, addr);
   //size of each array element
   auto temp = arr->get_type();
-  while(temp->get_base_type()->is_array()){
-    temp = temp->get_base_type();
-  }
-  Operand second(Operand::IMM_IVAL, temp->get_base_type()->get_storage_size());
+  // while(temp->get_base_type()->is_array()){
+  //   // temp = temp->get_base_type();
+  // }
+  // printf("who are you %s\n", temp->get_base_type()->as_str().c_str());
+  Operand second(Operand::IMM_IVAL, n->get_type()->get_storage_size());
   //localaddr vr11, $0
   //This part is not necessary for array in a function call, since we don't know the address before hand
   if(addr != -1 && !arr->get_tag() == AST_FIELD_REF_EXPRESSION){
