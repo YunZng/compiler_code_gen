@@ -24,13 +24,7 @@ int main(void){
   // loops are structured to avoid iterating over a column
   // of elements and incurring excessive cache misses
   // as a result
-  for(k = 0; k < M; k = k + 1){
-    for(i = 0; i < M; i = i + 1){
-      for(j = 0; j < M; j = j + 1){
-        val = c[i * M + j];
-      }
-    }
-  }
+  val = c[M];
 
   return 0;
 }

@@ -433,7 +433,8 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
   dest = next_vr();
   if(arr->get_type()->is_array()){
     start_addr = Operand(Operand::VREG, arr->get_vreg());
-  } else{
+  }
+  if(!n->get_type()->is_array()){
     n->set_actually_var(true);
   }
   m_hl_iseq->append(new Instruction(get_opcode(HINS_add_b, arr->get_type()), dest, start_addr, second));
