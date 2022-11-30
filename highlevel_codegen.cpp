@@ -195,6 +195,8 @@ void HighLevelCodegen::visit_binary_expression(Node* n){
         Operand temp = next_vr();
         m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, type1), temp, second));
         second = temp;
+      } else if(type2->is_array()){
+        type2 = type2->get_base_type();
       }
       m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, type1), first, second));
       curVreg = imVreg;
