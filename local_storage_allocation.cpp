@@ -78,7 +78,7 @@ void LocalStorageAllocation::visit_function_declaration(Node* n){}
 //do nothing function AGAIN hahahahahahaha
 void LocalStorageAllocation::visit_struct_type_definition(Node* n){
   printf("%s", debugg ? "lsa visit_struct_type_def\n" : "");
-
+  visit_children(n);
 }
 
 void LocalStorageAllocation::visit_literal_value(Node* n){

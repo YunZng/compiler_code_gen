@@ -1,11 +1,12 @@
-void print_i32(int n);
-void print_nl(void);
-
-struct Point{
-  int x, y;
+struct Person{
+  char name[20];
+  int age;
 };
 
 int main(void){
-  struct Point points[3];
+  struct Person p;
+  int a[2];
+  // a[1] = 0;
+  p.name[3] = 'A';
   return 0;
 }

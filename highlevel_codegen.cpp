@@ -328,22 +328,42 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
   printf("%s", debugs ? "hc visit_array_element_ref_expression\n" : "");
   Node* arr = n->get_kid(0);
   Node* index = n->get_kid(1);
+  visit(arr);
+  // puts("done visit");
   //if array allocated, size will be ≥0
-  int addr = arr->get_symbol()->get_addr();
+  int addr;
+  Operand start_addr;
+  if(arr->has_symbol()){
+    addr = arr->get_symbol()->get_addr();
+    start_addr = Operand(Operand::VREG, arr->get_symbol()->get_vreg());
+  } else if(arr->get_tag() == AST_FIELD_REF_EXPRESSION){
+    start_addr = Operand(Operand::VREG, arr->get_op().get_base_reg());
+    // puts("no symbol wa");
+    // printf("%s\n", arr->get_type()->as_str().c_str());
+    // addr = arr->get_type()->get_storage_size();
+    /*
+    mov_l    vr14, $0
+    sconv_lq vr15, vr14
+    mul_q    vr16, vr15, $1
+    add_q    vr17, vr13, vr16
+    */
+    // addr = 2222;
+    // return;
+  }
+  visit(index);
+
   Operand dest;
   Operand first(Operand::IMM_IVAL, addr);
   //size of each array element
   Operand second(Operand::IMM_IVAL, arr->get_type()->get_base_type()->get_storage_size());
-  Operand start_addr(Operand::VREG, arr->get_symbol()->get_vreg());
   //localaddr vr11, $0
   //This part is not necessary for array in a function call, since we don't know the address before hand
-  if(addr != -1){
+  if(addr != -1 && !arr->get_tag() == AST_FIELD_REF_EXPRESSION){
     dest = next_vr();
     m_hl_iseq->append(new Instruction(HINS_localaddr, dest, first));
     start_addr = dest;
   }
   //find offset (mul_b offset index siz)
-  visit(index);
   dest = next_vr();
   first = index->get_op();
   std::shared_ptr<Type> index_type = index->get_type();

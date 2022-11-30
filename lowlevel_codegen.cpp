@@ -500,7 +500,7 @@ Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode, int size, const std::
     ll_iseq->append(new Instruction(MINS_MOVQ, op, r11));
     return r11.to_memref();
   }
-  printf("hlopcode, %d", hl_opcode.get_kind());
+  // printf("hlopcode, %d", hl_opcode.get_kind());
   return Operand(Operand::MREG64_MEM_OFF, MREG_RBP, (10000 * 8) - m_total_memory_storage);
 }
 
