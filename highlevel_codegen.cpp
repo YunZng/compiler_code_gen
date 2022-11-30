@@ -346,6 +346,8 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
   if(arr->has_symbol()){
     addr = arr->get_symbol()->get_addr();
     start_addr = Operand(Operand::VREG, arr->get_symbol()->get_vreg());
+    // printf("who are you %s\n", arr->get_symbol()->get_type()->as_str().c_str());
+    // puts("fuck u");
   } else if(arr->get_tag() == AST_FIELD_REF_EXPRESSION){
     start_addr = Operand(Operand::VREG, arr->get_op().get_base_reg());
     // puts("no symbol wa");
@@ -411,6 +413,9 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
   //adjust address with offset
   second = dest;
   dest = next_vr();
+  if(arr->get_symbol()->get_type()->is_array()){
+    start_addr = arr->get_op();
+  }
   m_hl_iseq->append(new Instruction(get_opcode(HINS_add_b, arr->get_type()), dest, start_addr, second));
   //memory dereference
   n->set_op(dest.to_memref());
