@@ -504,9 +504,12 @@ void HighLevelCodegen::visit_field_ref_expression(Node* n){
   n->set_vreg(dest.get_base_reg());
 }
 void HighLevelCodegen::visit_expression_statement(Node* n){
-  int origin = curVreg;
-  visit(n->get_kid(0));
-  curVreg = origin;
+  for(int i = 0; i < n->get_num_kids(); i++){
+    int origin = curVreg;
+
+    visit(n->get_kid(0));
+    curVreg = origin;
+  }
 }
 
 void HighLevelCodegen::visit_indirect_field_ref_expression(Node* n){
