@@ -1,17 +1,10 @@
-void print_str(const char* s);
-void print_nl(void);
 void print_i32(int n);
-
-struct Person{
-  char name[20];
-  int age;
-};
+void print_space(void);
+void print_nl(void);
 
 int main(void){
-  struct Person p;
-  p.name[0] = 'A';
-  const char* s;
-  s = p.name;
 
+  int m[10][10];
+  m[1][4] = 8;
   return 0;
 }

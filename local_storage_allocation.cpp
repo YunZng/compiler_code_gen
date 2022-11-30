@@ -21,6 +21,8 @@ void LocalStorageAllocation::visit_declarator_list(Node* n){
     if(var_type->is_array()){
       kid->get_symbol()->set_addr(m_total_local_storage);
       int siz = var_type->get_array_size();
+      // printf("base size %d\n", var_type->get_base_type()->get_storage_size());
+      // printf("base size %d\n", siz);
       m_malloc(siz, var_type->get_base_type()->get_storage_size());
       // printf("storage size %d\n", m_total_local_storage);
     } else if(var_type->is_struct()){
@@ -101,7 +103,8 @@ void LocalStorageAllocation::m_malloc(int siz, int number){
   while(siz > i){
     i = i << 1;
   }
-  m_total_local_storage += (m_total_local_storage % i != 0) * (i - (m_total_local_storage % i)) + number * i;
+  // printf("base ssssize %d\n", number * siz);
+  m_total_local_storage += (m_total_local_storage % i != 0) * (i - (m_total_local_storage % i)) + number * siz;
 }
 
 std::vector<Node*> LocalStorageAllocation::get_str_node(){
