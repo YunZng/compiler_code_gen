@@ -414,7 +414,7 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
   second = dest;
   dest = next_vr();
   if(arr->get_type()->is_array()){
-    start_addr = arr->get_op();
+    start_addr = Operand(Operand::VREG, arr->get_vreg());
   }
   m_hl_iseq->append(new Instruction(get_opcode(HINS_add_b, arr->get_type()), dest, start_addr, second));
   //memory dereference
@@ -466,10 +466,6 @@ void HighLevelCodegen::visit_field_ref_expression(Node* n){
   // printf("var type %s\n", var_type->as_str().c_str());
   if(var_type->is_array()){
     var_type = var_type->get_base_type();
-  } else{
-    // dest = next_vr();
-    // // m_hl_iseq->append(new Instruction(HINS_localaddr, dest, addr));
-    // addr = dest;
   }
   // printf("type to str: %s\n", var_type->as_str().c_str());
   int offset = get_offset(var_type, field_name);
