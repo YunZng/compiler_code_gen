@@ -29,7 +29,7 @@ public:
   virtual void visit_array_element_ref_expression(Node* n);
   virtual void visit_binary_expression(Node* n);
   virtual void visit_do_while_statement(Node* n);
-  // virtual void visit_expression_statement(Node *n);
+  virtual void visit_expression_statement(Node* n);
   virtual void visit_field_ref_expression(Node* n);
   virtual void visit_for_statement(Node* n);
   virtual void visit_function_definition(Node* n);
