@@ -408,6 +408,7 @@ void HighLevelCodegen::visit_variable_ref(Node* n){
   // puts("4jk");
   n->set_op(op);
   n->set_type(n->get_symbol()->get_type());
+  n->set_vreg(op.get_base_reg());
 }
 
 void HighLevelCodegen::visit_field_ref_expression(Node* n){
