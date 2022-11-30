@@ -170,6 +170,7 @@ void HighLevelCodegen::visit_if_else_statement(Node* n){
 }
 
 void HighLevelCodegen::visit_binary_expression(Node* n){
+  int origin = curVreg;
   printf("%s", debugs ? "hc visit_binary_expression\n" : "");
   visit(n->get_kid(1));
   visit(n->get_kid(2));
@@ -262,8 +263,9 @@ void HighLevelCodegen::visit_binary_expression(Node* n){
   }
   Operand dest(next_vr());
   m_hl_iseq->append(new Instruction(get_opcode(op_code, n->get_kid(1)->get_type()), dest, first, second));
-  curVreg = imVreg;
+  // curVreg = imVreg;
   n->set_op(dest);
+  curVreg = origin;
 }
 
 void HighLevelCodegen::visit_unary_expression(Node* n){
