@@ -607,7 +607,7 @@ void HighLevelCodegen::convert(std::shared_ptr<Type> type1, Node* node2){
   code = (HighLevelOpcode)dif;
 
   if(code != HINS_nop){
-    curVreg = std::max((int)curVreg, node2->get_op().get_base_reg()) + 1;
+    curVreg = std::max((int)curVreg, node2->get_op().get_base_reg());
     Operand temp = next_vr();
     m_hl_iseq->append(new Instruction(code, temp, node2->get_op()));
     node2->set_op(temp);
