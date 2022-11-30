@@ -135,7 +135,7 @@ void HighLevelCodegen::visit_for_statement(Node* n){
   visit(n->get_kid(2));
   m_hl_iseq->define_label(cond_label);
   visit(n->get_kid(1));
-  m_hl_iseq->append(new Instruction(HINS_cjmp_t, Operand(Operand::VREG, curVreg), Operand(Operand::LABEL, body_label)));
+  m_hl_iseq->append(new Instruction(HINS_cjmp_t, n->get_kid(1)->get_op(), Operand(Operand::LABEL, body_label)));
 }
 
 void HighLevelCodegen::visit_if_statement(Node* n){
