@@ -181,14 +181,20 @@ void HighLevelCodegen::visit_binary_expression(Node* n){
     case TOK_ASSIGN:{
       std::shared_ptr<Type> type1 = n->get_kid(1)->get_type();
       std::shared_ptr<Type> type2 = n->get_kid(2)->get_type();
-      if(type1->is_array() && is_convertible(type1->get_base_type(), type2)){
-        type1 = type1->get_base_type();
+      if(type1->is_array()){
+        while(type1->is_array()){
+          type1 = type1->get_base_type();
+        }
+        if(!is_convertible(type1, type2)){
+          type1 = n->get_kid(1)->get_type();
+        };
       }
+      printf("assigned %s\n", type1->as_str().c_str());
+
       if(type2->is_array()){
         second = Operand(Operand::VREG, n->get_kid(2)->get_vreg());
       }
       m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, type1), first, second));
-      // printf("assigned %s\n", n->get_kid(1)->get_type()->as_str().c_str());
       curVreg = imVreg;
       return;
     }
@@ -309,14 +315,15 @@ void HighLevelCodegen::visit_function_call_expression(Node* n){
   for(int i = 0; i < arg_list->get_num_kids(); i++){
     Node* kid = arg_list->get_kid(i);
     visit(kid);
-
-
+    puts("312");
     std::shared_ptr<Type> index_type = kid->get_type();
     std::shared_ptr<Type> type1 = func->get_member(i).get_type();
     if(are_same(index_type, type1))
       goto done;
     convert(type1, kid);
   done:
+    puts("319");
+
     Operand first = kid->get_op();
     Operand second(Operand::VREG, argVreg++);
     m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, type1), second, first));
@@ -367,7 +374,11 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
   Operand dest;
   Operand first(Operand::IMM_IVAL, addr);
   //size of each array element
-  Operand second(Operand::IMM_IVAL, arr->get_type()->get_base_type()->get_storage_size());
+  auto temp = arr->get_type();
+  while(temp->get_base_type()->is_array()){
+    temp = temp->get_base_type();
+  }
+  Operand second(Operand::IMM_IVAL, temp->get_base_type()->get_storage_size());
   //localaddr vr11, $0
   //This part is not necessary for array in a function call, since we don't know the address before hand
   if(addr != -1 && !arr->get_tag() == AST_FIELD_REF_EXPRESSION){
@@ -611,6 +622,15 @@ bool HighLevelCodegen::are_same(std::shared_ptr<Type> type1, std::shared_ptr<Typ
   }
   if(type1->is_pointer() && type2->is_pointer()){
     return type1->is_same(type2.get());
+  }
+  if(type1->is_array() && !type2->is_array()){
+    return are_same(type1->get_base_type(), type2);
+    // return type1->get_base_type()->is_same(type2.get());
+  }
+  if(type2->is_array() && !type1->is_array()){
+    return are_same(type2->get_base_type(), type1);
+
+    // return type2->get_base_type()->is_same(type1.get());
   }
   return false;
 }
