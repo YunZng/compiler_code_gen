@@ -121,7 +121,7 @@ void HighLevelCodegen::visit_do_while_statement(Node* n){
   m_hl_iseq->define_label(body_label);
   visit(n->get_kid(0));
   visit(n->get_kid(1));
-  m_hl_iseq->append(new Instruction(HINS_cjmp_t, Operand(Operand::VREG, curVreg), Operand(Operand::LABEL, body_label)));
+  m_hl_iseq->append(new Instruction(HINS_cjmp_t, n->get_kid(1)->get_op(), Operand(Operand::LABEL, body_label)));
 }
 
 void HighLevelCodegen::visit_for_statement(Node* n){
@@ -262,7 +262,7 @@ void HighLevelCodegen::visit_binary_expression(Node* n){
   }
   Operand dest(next_vr());
   m_hl_iseq->append(new Instruction(get_opcode(op_code, n->get_kid(1)->get_type()), dest, first, second));
-  // curVreg = imVreg;
+  curVreg = imVreg;
   n->set_op(dest);
 }
 
@@ -467,6 +467,14 @@ void HighLevelCodegen::visit_variable_ref(Node* n){
   n->set_type(n->get_symbol()->get_type());
   n->set_vreg(op.get_base_reg());
 }
+void HighLevelCodegen::visit_expression_statement(Node* n){
+  for(int i = 0; i < n->get_num_kids(); i++){
+    int origin = curVreg;
+    visit(n->get_kid(i));
+    origin = curVreg;
+  }
+
+}
 
 void HighLevelCodegen::visit_field_ref_expression(Node* n){
   printf("%s", debugs ? "hc visit_field_ref_expression\n" : "");
@@ -502,14 +510,6 @@ void HighLevelCodegen::visit_field_ref_expression(Node* n){
   m_hl_iseq->append(new Instruction(HINS_add_q, dest, last_reg, first));
   n->set_op(dest.to_memref());
   n->set_vreg(dest.get_base_reg());
-}
-void HighLevelCodegen::visit_expression_statement(Node* n){
-  for(int i = 0; i < n->get_num_kids(); i++){
-    int origin = curVreg;
-
-    visit(n->get_kid(0));
-    curVreg = origin;
-  }
 }
 
 void HighLevelCodegen::visit_indirect_field_ref_expression(Node* n){
