@@ -35,7 +35,7 @@ HighLevelCodegen::HighLevelCodegen(int next_label_num)
 HighLevelCodegen::~HighLevelCodegen(){
 }
 
-int debugs = 1;
+int debugs = 0;
 void HighLevelCodegen::visit_function_definition(Node* n){
   printf("%s", debugs ? "hc visit_function_definition\n" : "");
   // generate the name of the label that return instructions should target
