@@ -191,7 +191,7 @@ void HighLevelCodegen::visit_binary_expression(Node* n){
       }
       // printf("assigned %s\n", type1->as_str().c_str());
 
-      if(type2->is_array()){
+      if(n->get_kid(2)->get_actually_var()){
         Operand temp = next_vr();
         m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, type1), temp, second));
         second = temp;
@@ -431,6 +431,8 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
   dest = next_vr();
   if(arr->get_type()->is_array()){
     start_addr = Operand(Operand::VREG, arr->get_vreg());
+  } else{
+    n->set_actually_var(true);
   }
   m_hl_iseq->append(new Instruction(get_opcode(HINS_add_b, arr->get_type()), dest, start_addr, second));
   //memory dereference

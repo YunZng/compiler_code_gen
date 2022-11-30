@@ -29,6 +29,7 @@ NodeBase::NodeBase(){
   vreg = 0;
   m_func = nullptr;
   addr = 0;
+  actually_var = 0;
 }
 
 NodeBase::~NodeBase(){
@@ -109,4 +110,10 @@ void NodeBase::set_addr(int addr1){
 
 int NodeBase::get_addr(){
   return addr;
+}
+bool NodeBase::get_actually_var(){
+  return actually_var;
+}
+void NodeBase::set_actually_var(bool a){
+  actually_var = a;
 }
