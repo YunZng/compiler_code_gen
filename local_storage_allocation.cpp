@@ -109,8 +109,6 @@ void LocalStorageAllocation::m_malloc(int siz, int number){
   m_total_local_storage += total;
   if(total % 8){
     m_total_local_storage += 8 - (total % 8);
-  } else if(total % 16){
-    m_total_local_storage += 16 - (total % 16);
   }
   // printf("base ssssize %d\n", (m_total_local_storage % i != 0) * (i - (m_total_local_storage % i)));
   // printf("base ssssize %d\n", i);
