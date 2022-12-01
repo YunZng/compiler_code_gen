@@ -12,6 +12,7 @@ private:
   int m_total_memory_storage;
   bool m_optimize;
   int mem_addr;
+  int highest;
 
 public:
   LowLevelCodeGen(bool optimize);

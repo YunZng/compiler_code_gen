@@ -81,6 +81,7 @@ namespace{
 LowLevelCodeGen::LowLevelCodeGen(bool optimize)
   : m_total_memory_storage(0)
   , m_optimize(optimize){
+  highest = 10;
 }
 
 LowLevelCodeGen::~LowLevelCodeGen(){
@@ -123,7 +124,8 @@ std::shared_ptr<InstructionSequence> LowLevelCodeGen::translate_hl_to_ll(const s
   // stack pointer (%rsp) will contain an address that is a multiple of 16.
   // If the total memory storage required is not a multiple of 16, add to
   // it so that it is.
-  m_total_memory_storage += (ll_iseq->get_funcdef_ast()->get_symbol()->get_vreg() - 9) * 8;
+  highest = ll_iseq->get_funcdef_ast()->get_symbol()->get_vreg();
+  m_total_memory_storage += (highest - 9) * 8;
   if((m_total_memory_storage) % 16 != 0)
     m_total_memory_storage += (16 - (m_total_memory_storage % 16));
 
@@ -465,8 +467,9 @@ Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode, int size, const std::
   if(hl_opcode.get_kind() == Operand::Kind::VREG){
     int base = hl_opcode.get_base_reg();
     if(base >= 10){
-      base -= 10;
-      Operand op(Operand::MREG64_MEM_OFF, MREG_RBP, (base * 8) + 8 - m_total_memory_storage);
+      // base -= 10;
+      base = highest - base;
+      Operand op(Operand::MREG64_MEM_OFF, MREG_RBP, mem_addr - base * 8);
       return op;
     } else if(base == 1){
       return Operand(select_mreg_kind(size), MREG_RDI);
@@ -479,9 +482,11 @@ Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode, int size, const std::
   if(hl_opcode.get_kind() == Operand::VREG_MEM){
     int base = hl_opcode.get_base_reg();
     if(base >= 10){
-      base -= 10;
+      base = highest - base;
+      // base -= 10;
     }
-    Operand op(Operand::MREG64_MEM_OFF, MREG_RBP, (base * 8) + 8 - m_total_memory_storage);
+    Operand op(Operand::MREG64_MEM_OFF, MREG_RBP, mem_addr - base * 8);
+    // printf("memadd = %d\n", mem_addr);
     Operand r11(Operand::MREG64, MREG_R11);
     ll_iseq->append(new Instruction(MINS_MOVQ, op, r11));
     return r11.to_memref();
