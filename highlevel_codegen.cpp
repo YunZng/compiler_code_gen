@@ -251,13 +251,13 @@ void HighLevelCodegen::visit_binary_expression(Node* n){
   if(first.is_memref()){
     Operand dest(next_vr());
     // if memref then auto _l since pointer is _l
-    m_hl_iseq->append(new Instruction(HINS_mov_l, dest, first));
+    m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, n->get_kid(1)->get_type()), dest, first));
     first = dest;
   }
   if(second.is_memref()){
     Operand dest(next_vr());
     // if memref then auto _l since pointer is _l
-    m_hl_iseq->append(new Instruction(HINS_mov_l, dest, second));
+    m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, n->get_kid(1)->get_type()), dest, second));
     second = dest;
   }
   Operand dest(next_vr());
