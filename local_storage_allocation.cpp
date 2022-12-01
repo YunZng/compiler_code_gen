@@ -19,6 +19,8 @@ void LocalStorageAllocation::visit_declarator_list(Node* n){
     std::shared_ptr<Type> var_type = kid->get_type();
     // printf("kid: %s\nSymbol: %s\n", kid->get_str().c_str(), kid->get_symbol()->as_str().c_str());
     if(var_type->is_array()){
+      // printf("storage size 1 %d\n", m_total_local_storage);
+
       kid->get_symbol()->set_addr(m_total_local_storage);
       int siz = var_type->get_array_size();
       // printf("base size %d\n", var_type->get_base_type()->get_storage_size());
@@ -99,12 +101,19 @@ void LocalStorageAllocation::visit_literal_value(Node* n){
 
 // align and increment total storage allocation, number is useful for array
 void LocalStorageAllocation::m_malloc(int siz, int number){
-  int i = 1;
-  while(siz > i){
-    i = i << 1;
+  // int i = 1;
+  // while(siz > i){
+  //   i = i << 1;
+  // }
+  int total = number * siz;
+  m_total_local_storage += total;
+  if(total % 8){
+    m_total_local_storage += 8 - (total % 8);
+  } else if(total % 16){
+    m_total_local_storage += 16 - (total % 16);
   }
-  // printf("base ssssize %d\n", number * siz);
-  m_total_local_storage += (m_total_local_storage % i != 0) * (i - (m_total_local_storage % i)) + number * siz;
+  // printf("base ssssize %d\n", (m_total_local_storage % i != 0) * (i - (m_total_local_storage % i)));
+  // printf("base ssssize %d\n", i);
 }
 
 std::vector<Node*> LocalStorageAllocation::get_str_node(){
