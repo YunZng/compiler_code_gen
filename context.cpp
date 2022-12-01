@@ -46,7 +46,7 @@ Context::~Context(){
 
 struct CloseFile{
   void operator()(FILE* in){
-    if (in != nullptr){
+    if(in != nullptr){
       fclose(in);
     }
   }
@@ -55,24 +55,24 @@ struct CloseFile{
 namespace{
 
   template<typename Fn>
-  void process_source_file(const std::string& filename , Fn fn){
+  void process_source_file(const std::string& filename, Fn fn){
     // open the input source file
-    std::unique_ptr<FILE , CloseFile> in(fopen(filename.c_str() , "r"));
-    if (!in){
-      RuntimeError::raise("Couldn't open '%s'" , filename.c_str());
+    std::unique_ptr<FILE, CloseFile> in(fopen(filename.c_str(), "r"));
+    if(!in){
+      RuntimeError::raise("Couldn't open '%s'", filename.c_str());
     }
 
     // create an initialize ParserState; note that its destructor
     // will take responsibility for cleaning up the lexer state
     std::unique_ptr<ParserState> pp(new ParserState);
-    pp->cur_loc = Location(filename , 1 , 1);
+    pp->cur_loc = Location(filename, 1, 1);
 
     // prepare the lexer
     yylex_init(&pp->scan_info);
-    yyset_in(in.get() , pp->scan_info);
+    yyset_in(in.get(), pp->scan_info);
 
     // make the ParserState available from the lexer state
-    yyset_extra(pp.get() , pp->scan_info);
+    yyset_extra(pp.get(), pp->scan_info);
 
     // use the ParserState to either scan tokens or parse the input
     // to build an AST
@@ -81,20 +81,20 @@ namespace{
 
 }
 
-void Context::scan_tokens(const std::string& filename , std::vector<Node*>& tokens){
+void Context::scan_tokens(const std::string& filename, std::vector<Node*>& tokens){
   auto callback = [&](ParserState* pp){
     YYSTYPE yylval;
 
     // the lexer will store pointers to all of the allocated
     // token objects in the ParserState, so all we need to do
     // is call yylex() until we reach the end of the input
-    while (yylex(&yylval , pp->scan_info) != 0)
+    while(yylex(&yylval, pp->scan_info) != 0)
       ;
 
-    std::copy(pp->tokens.begin() , pp->tokens.end() , std::back_inserter(tokens));
+    std::copy(pp->tokens.begin(), pp->tokens.end(), std::back_inserter(tokens));
   };
 
-  process_source_file(filename , callback);
+  process_source_file(filename, callback);
 }
 
 void Context::parse(const std::string& filename){
@@ -111,14 +111,14 @@ void Context::parse(const std::string& filename){
     // but weren't incorporated into the parse tree
     std::set<Node*> tree_nodes;
     m_ast->preorder([&tree_nodes](Node* n){ tree_nodes.insert(n); });
-    for (auto i = pp->tokens.begin(); i != pp->tokens.end(); ++i){
-      if (tree_nodes.count(*i) == 0){
+    for(auto i = pp->tokens.begin(); i != pp->tokens.end(); ++i){
+      if(tree_nodes.count(*i) == 0){
         delete* i;
       }
     }
   };
 
-  process_source_file(filename , callback);
+  process_source_file(filename, callback);
 }
 
 void Context::analyze(){
@@ -133,31 +133,31 @@ void Context::highlevel_codegen(ModuleCollector* module_collector){
   //       find all of the string constants in the AST
   //       and call the ModuleCollector's collect_string_constant
   //       member function for each one
-  for (auto i : allocator.get_str_node()){
+  for(auto i : allocator.get_str_node()){
     //strip quote from literal value class
     std::string s(i->get_str().substr(1));
     s.pop_back();
 
     std::string name = "_str" + std::to_string(i->get_vreg());
-    module_collector->collect_string_constant(name , s);
+    module_collector->collect_string_constant(name, s);
     // printf("string: %s\n", i.c_str());
   }
 
   // collect all of the global variables
   SymbolTable* globals = m_sema.get_global_symtab();
-  for (auto i = globals->cbegin(); i != globals->cend(); ++i){
+  for(auto i = globals->cbegin(); i != globals->cend(); ++i){
     Symbol* sym = *i;
-    if (sym->get_kind() == SymbolKind::VARIABLE){
-      module_collector->collect_global_var(sym->get_name() , sym->get_type());
+    if(sym->get_kind() == SymbolKind::VARIABLE){
+      module_collector->collect_global_var(sym->get_name(), sym->get_type());
     }
   }
 
   // generating high-level code for each function, and then send the
   // generated high-level InstructionSequence to the ModuleCollector
   int next_label_num = 0;
-  for (auto i = m_ast->cbegin(); i != m_ast->cend(); ++i){
+  for(auto i = m_ast->cbegin(); i != m_ast->cend(); ++i){
     Node* child = *i;
-    if (child->get_tag() == AST_FUNCTION_DEFINITION){
+    if(child->get_tag() == AST_FUNCTION_DEFINITION){
       HighLevelCodegen hl_codegen(next_label_num);
       hl_codegen.visit(child);
       std::string fn_name = child->get_kid(1)->get_str();
@@ -169,7 +169,7 @@ void Context::highlevel_codegen(ModuleCollector* module_collector){
       // code generator
       hl_iseq->set_funcdef_ast(child);
 
-      module_collector->collect_function(fn_name , hl_iseq);
+      module_collector->collect_function(fn_name, hl_iseq);
 
       // make sure local label numbers are not reused between functions
       next_label_num = hl_codegen.get_next_label_num();
@@ -188,15 +188,15 @@ namespace{
     bool m_optimize;
 
   public:
-    LowLevelCodeGenModuleCollector(ModuleCollector* delegate , bool optimize);
+    LowLevelCodeGenModuleCollector(ModuleCollector* delegate, bool optimize);
     virtual ~LowLevelCodeGenModuleCollector();
 
-    virtual void collect_string_constant(const std::string& name , const std::string& strval);
-    virtual void collect_global_var(const std::string& name , const std::shared_ptr<Type>& type);
-    virtual void collect_function(const std::string& name , const std::shared_ptr<InstructionSequence>& iseq);
+    virtual void collect_string_constant(const std::string& name, const std::string& strval);
+    virtual void collect_global_var(const std::string& name, const std::shared_ptr<Type>& type);
+    virtual void collect_function(const std::string& name, const std::shared_ptr<InstructionSequence>& iseq);
   };
 
-  LowLevelCodeGenModuleCollector::LowLevelCodeGenModuleCollector(ModuleCollector* delegate , bool optimize)
+  LowLevelCodeGenModuleCollector::LowLevelCodeGenModuleCollector(ModuleCollector* delegate, bool optimize)
     : m_delegate(delegate)
     , m_optimize(optimize){
   }
@@ -204,27 +204,27 @@ namespace{
   LowLevelCodeGenModuleCollector::~LowLevelCodeGenModuleCollector(){
   }
 
-  void LowLevelCodeGenModuleCollector::collect_string_constant(const std::string& name , const std::string& strval){
-    m_delegate->collect_string_constant(name , strval);
+  void LowLevelCodeGenModuleCollector::collect_string_constant(const std::string& name, const std::string& strval){
+    m_delegate->collect_string_constant(name, strval);
   }
 
-  void LowLevelCodeGenModuleCollector::collect_global_var(const std::string& name , const std::shared_ptr<Type>& type){
-    m_delegate->collect_global_var(name , type);
+  void LowLevelCodeGenModuleCollector::collect_global_var(const std::string& name, const std::shared_ptr<Type>& type){
+    m_delegate->collect_global_var(name, type);
   }
 
-  void LowLevelCodeGenModuleCollector::collect_function(const std::string& name , const std::shared_ptr<InstructionSequence>& iseq){
+  void LowLevelCodeGenModuleCollector::collect_function(const std::string& name, const std::shared_ptr<InstructionSequence>& iseq){
     LowLevelCodeGen ll_codegen(m_optimize);
 
     // translate high-level code to low-level code
     std::shared_ptr<InstructionSequence> ll_iseq = ll_codegen.generate(iseq);
 
     // send the low-level code on to the delegate (i.e., print the code)
-    m_delegate->collect_function(name , ll_iseq);
+    m_delegate->collect_function(name, ll_iseq);
   }
 
 }
 
-void Context::lowlevel_codegen(ModuleCollector* module_collector , bool optimize){
-  LowLevelCodeGenModuleCollector ll_codegen_module_collector(module_collector , optimize);
+void Context::lowlevel_codegen(ModuleCollector* module_collector, bool optimize){
+  LowLevelCodeGenModuleCollector ll_codegen_module_collector(module_collector, optimize);
   highlevel_codegen(&ll_codegen_module_collector);
 }

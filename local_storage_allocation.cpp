@@ -70,8 +70,8 @@ void LocalStorageAllocation::visit_unary_expression(Node* n){
     // make sure only allocated once
     if(n->get_kid(1)->get_symbol()->get_addr() == -1){
       unsigned siz = base_type->get_storage_size();
+      n->get_kid(1)->get_symbol()->set_addr(m_total_local_storage);
       m_malloc(siz, 1);
-      n->get_kid(1)->get_symbol()->set_addr(m_total_local_storage - siz);
     }
   }
 }

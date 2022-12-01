@@ -274,8 +274,8 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
   if(hl_opcode == HINS_localaddr){
     int sec_operand = hl_ins->get_operand(1).get_imm_ival();
     Operand r10(Operand::MREG64, MREG_R10); // r10 
-    int addr = (sec_operand + 1) * 8 + mem_addr;
-    // printf("vreg all %d\n", addr);
+    int addr = (sec_operand + 8) + mem_addr;
+    // printf("vreg all %d\n", sec_operand);
     Operand rbp(Operand::MREG64_MEM_OFF, MREG_RBP, addr);
 
     ll_iseq->append(new Instruction(MINS_LEAQ, rbp, r10));
@@ -466,7 +466,7 @@ Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode, int size, const std::
     int base = hl_opcode.get_base_reg();
     if(base >= 10){
       base -= 10;
-      Operand op(Operand::MREG64_MEM_OFF, MREG_RBP, (base * 8) - m_total_memory_storage);
+      Operand op(Operand::MREG64_MEM_OFF, MREG_RBP, (base * 8) + 8 - m_total_memory_storage);
       return op;
     } else if(base == 1){
       return Operand(select_mreg_kind(size), MREG_RDI);
@@ -481,7 +481,7 @@ Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode, int size, const std::
     if(base >= 10){
       base -= 10;
     }
-    Operand op(Operand::MREG64_MEM_OFF, MREG_RBP, (base * 8) - m_total_memory_storage);
+    Operand op(Operand::MREG64_MEM_OFF, MREG_RBP, (base * 8) + 8 - m_total_memory_storage);
     Operand r11(Operand::MREG64, MREG_R11);
     ll_iseq->append(new Instruction(MINS_MOVQ, op, r11));
     return r11.to_memref();

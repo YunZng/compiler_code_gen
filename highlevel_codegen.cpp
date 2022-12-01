@@ -300,10 +300,10 @@ void HighLevelCodegen::visit_unary_expression(Node* n){
       break;
     }
     case TOK_AMPERSAND:{
-      dest = next_vr();
-      addr = var->get_symbol()->get_addr();
-      first = Operand(Operand::IMM_IVAL, addr);
-      m_hl_iseq->append(new Instruction(HINS_localaddr, dest, first));
+      // dest = next_vr();
+      // addr = var->get_symbol()->get_addr();
+      // first = Operand(Operand::IMM_IVAL, addr);
+      // m_hl_iseq->append(new Instruction(HINS_localaddr, dest, first));
       break;
     }
   }
@@ -608,6 +608,7 @@ void HighLevelCodegen::convert(std::shared_ptr<Type> type1, Node* node2){
 
   if(code != HINS_nop){
     curVreg = std::max((int)curVreg, node2->get_op().get_base_reg());
+    highestVreg = std::max(highestVreg, curVreg);
     Operand temp = next_vr();
     m_hl_iseq->append(new Instruction(code, temp, node2->get_op()));
     node2->set_op(temp);
