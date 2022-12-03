@@ -129,7 +129,10 @@ void Context::analyze(){
 void Context::highlevel_codegen(ModuleCollector* module_collector){
 
   LocalStorageAllocation allocator;
+  // puts("begin");
   allocator.visit(m_ast);
+  // puts("end");
+
   //       find all of the string constants in the AST
   //       and call the ModuleCollector's collect_string_constant
   //       member function for each one
@@ -162,7 +165,6 @@ void Context::highlevel_codegen(ModuleCollector* module_collector){
       hl_codegen.visit(child);
       std::string fn_name = child->get_kid(1)->get_str();
       std::shared_ptr<InstructionSequence> hl_iseq = hl_codegen.get_hl_iseq();
-
       // store a pointer to the function definition AST in the
       // high-level InstructionSequence: this is useful in case information
       // about the function definition is needed by the low-level

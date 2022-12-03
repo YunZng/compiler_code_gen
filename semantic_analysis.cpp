@@ -511,6 +511,7 @@ void SemanticAnalysis::visit_array_element_ref_expression(Node* n){
   //equivalent to *(a+i), get_base_type is similar to deferencing
   // printf("field type: %d\n", n->get_kid(0)->get_type()->get_base_type()->is_lvalue());
   n->set_type(n->get_kid(0)->get_type()->get_base_type());
+  n->set_symbol(n->get_kid(0)->get_symbol());
 }
 
 void SemanticAnalysis::visit_variable_ref(Node* n){
@@ -565,6 +566,11 @@ void SemanticAnalysis::visit_return_expression_statement(Node* n){
     SemanticError::raise(n->get_loc(), "Does not match function return type");
   }
   n->set_type(m_cur_symtab->get_fn_type()->get_base_type());
+
+  for(auto i = m_cur_symtab->cbegin(); i != m_cur_symtab->cend(); i++){
+    // printf("the symbol : %s\n", (*i)->as_str().c_str());
+    // printf("the type : %s\n", (*i)->get_type()->as_str().c_str());
+  }
 }
 
 void SemanticAnalysis::visit_while_statement(Node* n){

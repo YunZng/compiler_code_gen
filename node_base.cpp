@@ -36,7 +36,7 @@ NodeBase::~NodeBase(){
 }
 
 void NodeBase::set_symbol(Symbol* symbol){
-  assert(!has_symbol());
+  // assert(!has_symbol());
   m_symbol = symbol;
 }
 

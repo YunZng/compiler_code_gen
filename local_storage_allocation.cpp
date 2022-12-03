@@ -66,7 +66,10 @@ void LocalStorageAllocation::visit_statement_list(Node* n){
 void LocalStorageAllocation::visit_unary_expression(Node* n){
   printf("%s", debugg ? "lsa visit_unary_expression\n" : "");
   if(n->get_kid(0)->get_tag() == TOK_AMPERSAND){
+    visit_children(n);
     std::shared_ptr<Type> base_type = n->get_kid(1)->get_type();
+    printf("the kid n->get_kid(1)->get_symbol(): %s", n->get_kid(1)->get_symbol()->as_str().c_str());
+    puts("end");
     // make sure only allocated once
     if(n->get_kid(1)->get_symbol()->get_addr() == -1){
       unsigned siz = base_type->get_storage_size();
