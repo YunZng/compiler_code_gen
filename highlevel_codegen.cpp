@@ -43,7 +43,6 @@ void HighLevelCodegen::visit_function_definition(Node* n){
   imVreg = curVreg;
   std::string fn_name = n->get_kid(1)->get_str();
   m_return_label_name = ".L" + fn_name + "_return";
-  // puts("1jk");
   unsigned total_local_storage = n->get_symbol()->get_addr();
   /*
     total_local_storage = n->get_total_local_storage();
@@ -57,7 +56,6 @@ void HighLevelCodegen::visit_function_definition(Node* n){
     visit_variable_ref(param);
     Operand first = param->get_op();
     Operand second(Operand::VREG, argVreg++);
-    // puts("9jk");
     m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, param->get_type()), first, second));
   }
   // reset arg register
@@ -360,7 +358,6 @@ void HighLevelCodegen::visit_array_element_ref_expression(Node* n){
     addr = arr->get_symbol()->get_addr();
     start_addr = Operand(Operand::VREG, arr->get_symbol()->get_vreg());
     // printf("who are you %s\n", arr->get_symbol()->get_type()->as_str().c_str());
-    // puts("fuck u");
   } else if(arr->get_tag() == AST_FIELD_REF_EXPRESSION){
     start_addr = Operand(Operand::VREG, arr->get_op().get_base_reg());
   }

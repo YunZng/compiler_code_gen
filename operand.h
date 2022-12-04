@@ -68,6 +68,9 @@ public:
   // Is the operand an immediate label?
   bool is_imm_label() const;
 
+  // Does the operand have a base register?
+  bool has_base_reg() const { return m_basereg >= 0; }
+
   // Does the operand have an index register?
   bool has_index_reg() const;
 

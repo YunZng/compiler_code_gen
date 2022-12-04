@@ -19,6 +19,8 @@ public:
 
   ~Instruction();
 
+  Instruction *duplicate() const { return new Instruction(*this); }
+
   int get_opcode() const;
 
   unsigned get_num_operands() const;

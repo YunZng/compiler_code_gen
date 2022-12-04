@@ -8,6 +8,8 @@
 #include "lowlevel.h"
 #include "exceptions.h"
 #include "lowlevel_codegen.h"
+#include "cfg.h"
+#include "cfg_transform.h"
 
 namespace{
 
@@ -89,10 +91,36 @@ LowLevelCodeGen::~LowLevelCodeGen(){
 
 std::shared_ptr<InstructionSequence> LowLevelCodeGen::generate(const std::shared_ptr<InstructionSequence>& hl_iseq){
   // TODO: if optimizations are enabled, could do analysis/transformation of high-level code
+  Node* funcdef_ast = hl_iseq->get_funcdef_ast();
 
-  std::shared_ptr<InstructionSequence> ll_iseq = translate_hl_to_ll(hl_iseq);
+  // cur_hl_iseq is the "current" version of the high-level IR,
+  // which could be a transformed version if we are doing optimizations
+  std::shared_ptr<InstructionSequence> cur_hl_iseq(hl_iseq);
 
-  // TODO: if optimizations are enabled, could do analysis/transformation of low-level code
+  if(m_optimize){
+    // Create a control-flow graph representation of the high-level code
+    HighLevelControlFlowGraphBuilder hl_cfg_builder(cur_hl_iseq);
+    std::shared_ptr<ControlFlowGraph> cfg = hl_cfg_builder.build();
+
+    // Do local optimizations
+    MyOptimization hl_opts(cfg);
+    cfg = hl_opts.transform_cfg();
+
+    // Convert the transformed high-level CFG back to an InstructionSequence
+    cur_hl_iseq = cfg->create_instruction_sequence();
+
+    // The function definition AST might have information needed for
+    // low-level code generation
+    cur_hl_iseq->set_funcdef_ast(funcdef_ast);
+  }
+
+  // Translate (possibly transformed) high-level code into low-level code
+  std::shared_ptr<InstructionSequence> ll_iseq = translate_hl_to_ll(cur_hl_iseq);
+
+  if(m_optimize){
+    // ...could do transformations on the low-level code, possible peephole
+    //    optimizations...
+  }
 
   return ll_iseq;
 }
@@ -497,6 +525,6 @@ Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode, int size, const std::
 
 /*
 
-alias back='cd ~/compilers/assign04-yulun/compiler_code_gen/'; alias test='cd ~/compilers/fall2022-tests/assign04/'; alias check='back; make clean; git pull origin main; make clean; make depend; make -j; test; ./run_all.rb'; export ASSIGN04_DIR=~/compilers/assign04-yulun/compiler_code_gen/;
+alias back='cd ~/compilers/assign04-yulun/compiler_code_gen/'; alias test='cd ~/compilers/fall2022-tests/assign04/'; alias check='back; make clean; git pull origin main; make clean; make depend; make -j; test; ./run_all.rb'; export ASSIGN04_DIR=~/compilers/assign04-yulun/compiler_code_gen/;export ASSIGN05_DIR=~/compilers/assign04-yulun/compiler_code_gen/;
 
 */

@@ -24,45 +24,54 @@ private:
   InstructionSequence &operator=(const InstructionSequence &);
 
 public:
-  // const_iterator type, for navigating through the pointers to
-  // Instruction objects
-  class const_iterator {
+  // Generic const_iterator type, for navigating through the pointers to
+  // Instruction objects. It is parametized with the underlying
+  // vector const iterator type, to allow forward and reverse versions
+  // to be defined easily.
+  template<typename It>
+  class ISeqIterator {
   private:
-    std::vector<Slot>::const_iterator slot_iter;
+    It slot_iter;
 
   public:
-    const_iterator() { }
+    ISeqIterator() { }
 
-    const_iterator(std::vector<Slot>::const_iterator i) : slot_iter(i) { }
+    ISeqIterator(It i) : slot_iter(i) { }
 
-    const_iterator(const const_iterator &other) : slot_iter(other.slot_iter) { }
+    ISeqIterator(const ISeqIterator<It> &other) : slot_iter(other.slot_iter) { }
 
-    const_iterator &operator=(const const_iterator &rhs) {
+    ISeqIterator<It> &operator=(const ISeqIterator<It> &rhs) {
       if (this != &rhs) { slot_iter = rhs.slot_iter; }
       return *this;
     }
 
-    bool operator==(const const_iterator &rhs) const { return slot_iter == rhs.slot_iter; }
-    bool operator!=(const const_iterator &rhs) const { return slot_iter != rhs.slot_iter; }
+    bool operator==(const ISeqIterator<It> &rhs) const { return slot_iter == rhs.slot_iter; }
+    bool operator!=(const ISeqIterator<It> &rhs) const { return slot_iter != rhs.slot_iter; }
 
     Instruction* operator*() const { return slot_iter->ins; }
     bool has_label() const { return !slot_iter->label.empty(); }
     std::string get_label() const { return slot_iter->label; }
 
-    const_iterator &operator++() {
+    ISeqIterator<It> &operator++() {
       slot_iter++;
       return *this;
     }
 
-    const_iterator operator++(int) {
-      const_iterator copy(*this);
+    ISeqIterator<It> operator++(int) {
+      ISeqIterator<It> copy(*this);
       slot_iter++;
       return copy;
     }
   };
 
+  typedef ISeqIterator<std::vector<Slot>::const_iterator> const_iterator;
+  typedef ISeqIterator<std::vector<Slot>::const_reverse_iterator> const_reverse_iterator;
+
   InstructionSequence();
   virtual ~InstructionSequence();
+
+  // Return a dynamically-allocated duplicate of this InstructionSequence
+  InstructionSequence *duplicate() const;
 
   // Access to function definition AST node
   void set_funcdef_ast(Node *funcdef_ast) { m_funcdef_ast = funcdef_ast; }
@@ -71,6 +80,10 @@ public:
   // get begin and end const_iterators
   const_iterator cbegin() const { return const_iterator(m_instructions.cbegin()); }
   const_iterator cend() const { return const_iterator(m_instructions.cend()); }
+
+  // get begin and end const_reverse_iterators
+  const_reverse_iterator crbegin() const { return const_reverse_iterator(m_instructions.crbegin()); }
+  const_reverse_iterator crend() const { return const_reverse_iterator(m_instructions.crend()); }
 
   // Append a pointer to an Instruction.
   // The InstructionSequence will assume responsibility for deleting the
@@ -82,6 +95,9 @@ public:
 
   // Get Instruction at specified index.
   Instruction *get_instruction(unsigned index) const;
+
+  // Get the last Instruction.
+  Instruction *get_last_instruction() const;
 
   // Define a label. The next Instruction appended will be labeled with
   // this label.
@@ -99,6 +115,9 @@ public:
   // Find Instruction labeled with specified label.
   // Returns null pointer if no Instruction has the specified label.
   Instruction *find_labeled_instruction(const std::string &label) const;
+
+  // Return the index of instruction labeled with the specified label.
+  unsigned get_index_of_labeled_instruction(const std::string &label) const;
 };
 
 #endif // INSTRUCTION_SEQ_H

@@ -49,7 +49,7 @@ const std::map<Operand::Kind, OperandProperties> s_operand_props = {
   { Operand::MREG64_MEM_OFF,   { .flags = LL|MEMREF|HAS_OFFSET } },
   { Operand::IMM_IVAL,         { .flags = HL|LL|IMM_IVAL } },
   { Operand::LABEL,            { .flags = HL|LL|LABEL } },
-  { Operand::IMM_LABEL,        { .flags = HL|LL|LABEL } },
+  { Operand::IMM_LABEL,        { .flags = HL|LL|IMM_LABEL } },
 };
 
 const OperandProperties &oprops(Operand::Kind opkind) {

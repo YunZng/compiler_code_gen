@@ -11,6 +11,7 @@ SRCS = node.cpp node_base.cpp location.cpp treeprint.cpp \
 	local_storage_allocation.cpp highlevel_codegen.cpp storage.cpp \
 	print_code.cpp print_highlevel_code.cpp print_lowlevel_code.cpp \
 	lowlevel.cpp lowlevel_formatter.cpp lowlevel_codegen.cpp \
+	cfg.cpp cfg_transform.cpp print_cfg.cpp highlevel_defuse.cpp \
 	yyerror.cpp exceptions.cpp cpputil.cpp \
 	$(GENERATED_SRCS)
 OBJS = $(SRCS:%.cpp=%.o)

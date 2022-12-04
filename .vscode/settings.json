@@ -67,6 +67,7 @@
         "functional": "cpp",
         "iterator": "cpp",
         "utility": "cpp",
-        "cassert": "cpp"
+        "cassert": "cpp",
+        "deque": "cpp"
     }
 }

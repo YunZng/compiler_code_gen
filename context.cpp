@@ -129,9 +129,7 @@ void Context::analyze(){
 void Context::highlevel_codegen(ModuleCollector* module_collector){
 
   LocalStorageAllocation allocator;
-  // puts("begin");
   allocator.visit(m_ast);
-  // puts("end");
 
   //       find all of the string constants in the AST
   //       and call the ModuleCollector's collect_string_constant
