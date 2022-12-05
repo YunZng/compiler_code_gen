@@ -532,6 +532,7 @@ Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode, int size, const std::
 
 /*
 
-alias back='cd ~/compilers/assign04-yulun/compiler_code_gen/'; alias test='cd ~/compilers/fall2022-tests/assign04/'; alias check='back; make clean; git pull origin main; make clean; make depend; make -j; test; ./run_all.rb'; export ASSIGN04_DIR=~/compilers/assign04-yulun/compiler_code_gen/;export ASSIGN05_DIR=~/compilers/assign04-yulun/compiler_code_gen/;
+alias back='cd ~/compilers/assign04-yulun/compiler_code_gen/'; alias test4='cd ~/compilers/fall2022-tests/assign04/'; alias test5='cd ~/compilers/fall2022-tests/assign05/'; alias get='back; make clean; git pull origin main; make clean; make depend; make -j;'; export ASSIGN04_DIR=~/compilers/assign04-yulun/compiler_code_gen/;export ASSIGN05_DIR=~/compilers/assign04-yulun/compiler_code_gen/;
+alias try='./run_all.rb -o';
 
 */
