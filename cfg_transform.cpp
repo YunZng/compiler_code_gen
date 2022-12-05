@@ -129,7 +129,7 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
     if(new_ins){
       result_iseq->append(new_ins);
       std::string formatted_ins = formatter.format_instruction(new_ins);
-      // printf("\t%s\n", formatted_ins.c_str());
+      printf("\t%s\n", formatted_ins.c_str());
       // puts("above is generated");
       new_ins = nullptr;
     }
@@ -157,7 +157,7 @@ MyOptimization::dead_store(const InstructionSequence* orig_bb){
 
 
       //If a vreg is not alive at the end of the basic block, that means it's not used for the rest of the basic blocks
-      if(!live_after.test(dest.get_base_reg()) && dest.get_base_reg() != 0){
+      if(!live_after.test(dest.get_base_reg()) && dest.get_base_reg() > 9){
         preserve_instruction = false;
       }
     }
@@ -167,5 +167,9 @@ MyOptimization::dead_store(const InstructionSequence* orig_bb){
   }
 
   return result_iseq;
-
 }
+
+// bool is_regular(Operand dest){
+//   int vreg = dest.get_base_reg();
+//   return vreg <
+// }
