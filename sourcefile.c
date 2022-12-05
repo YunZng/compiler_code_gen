@@ -7,7 +7,8 @@ int main(void){
 
   q = &p;
 
+  q->x = 2;
   q->y = 3;
 
-  return q->y;
+  return q->x + q->y;
 }
