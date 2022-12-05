@@ -87,7 +87,7 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
 
     HighLevelFormatter formatter;
     // puts("beginning");
-    // std::string formatted_ins = formatter.format_instruction(new_ins);
+    std::string formatted_ins = formatter.format_instruction(new_ins);
     // printf("\t%s\n", formatted_ins.c_str());
 
     // if destination is changed, need to update
@@ -98,6 +98,8 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
         vregVal.erase(dest_vreg);
       }
     } else if(HighLevel::is_def(orig_ins)){
+      loop_check(1, new_ins, orig_ins, vregVal);
+
       Operand dest = orig_ins->get_operand(0);
       int dest_vreg = dest.get_base_reg();
       if(vregVal.find(dest_vreg) != vregVal.end()){
@@ -107,9 +109,11 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
         vregVal[dest_vreg] = orig_ins->get_operand(1).get_imm_ival();
         delete new_ins;
         new_ins = nullptr;
-      } else{
-        loop_check(1, new_ins, orig_ins, vregVal);
       }
+      // else{
+      //   printf("has %d\n", vregVal.find(11) != vregVal.end());
+
+      // }
     } else{
       loop_check(0, new_ins, orig_ins, vregVal);
     }
@@ -117,7 +121,6 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
       result_iseq->append(new_ins);
       std::string formatted_ins = formatter.format_instruction(new_ins);
       // printf("\t%s\n", formatted_ins.c_str());
-      // puts("above is generated");
       new_ins = nullptr;
     }
 
@@ -138,11 +141,7 @@ MyOptimization::dead_store(const InstructionSequence* orig_bb){
 
     if(HighLevel::is_def(orig_ins)){
       Operand dest = orig_ins->get_operand(0);
-
       LiveVregs::FactType live_after = m_live_vregs.get_fact_after_instruction(orig_bb_as_basic_block, orig_ins);
-      // printf("fact %s\n", LiveVregs::fact_to_string(live_after).c_str());
-
-
       //If a vreg is not alive at the end of the basic block, that means it's not used for the rest of the basic blocks
       if(!live_after.test(dest.get_base_reg()) && dest.get_base_reg() > 9){
         preserve_instruction = false;
@@ -156,9 +155,9 @@ MyOptimization::dead_store(const InstructionSequence* orig_bb){
   return result_iseq;
 }
 
-void MyOptimization::loop_check(int i, Instruction* new_ins, Instruction* orig_ins, std::unordered_map<int, long>& vregVal){
+void MyOptimization::loop_check(int i, Instruction*& new_ins, Instruction*& orig_ins, std::unordered_map<int, long>& vregVal){
   // if(orig_ins->get_opcode() != HINS_localaddr){
-  for(int j = 0; j < orig_ins->get_num_operands(); j++){
+  for(int j = i; j < orig_ins->get_num_operands(); j++){
     Operand op = orig_ins->get_operand(j);
     if(!op.is_memref() && !op.is_non_reg()){
       int op_vreg = op.get_base_reg();

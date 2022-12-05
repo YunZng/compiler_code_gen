@@ -46,6 +46,6 @@ public:
   virtual std::shared_ptr<InstructionSequence> dead_store(const InstructionSequence* orig_bb);
 
 private:
-  void loop_check(int, Instruction*, Instruction*, std::unordered_map<int, long>&);
+  void loop_check(int, Instruction*&, Instruction*&, std::unordered_map<int, long>&);
 };
 #endif // CFG_TRANSFORM_H

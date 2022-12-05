@@ -1,6 +1,12 @@
+struct Point{
+  int x, y;
+};
+
 int main(void){
-  int a, * p;
-  p = &a;
-  *p = 42;
-  return a; // should return 42
+  struct Point p;
+
+  p.x = 2;
+  // p.y = 3;
+
+  return p.x;
 }
