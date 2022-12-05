@@ -447,6 +447,10 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
     }
 
     ll_iseq->append(new Instruction(opcode, trd_operand, sec_operand));
+    if(sec_operand.is_memref() && first_operand.is_memref()){
+      ll_iseq->append(new Instruction(mov_opcode, sec_operand, r10));
+      sec_operand = r10;
+    }
     ll_iseq->append(new Instruction(mov_opcode, sec_operand, first_operand));
     return;
   }

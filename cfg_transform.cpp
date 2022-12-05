@@ -30,8 +30,9 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
 
     // Transform the instructions
     std::shared_ptr<InstructionSequence> transformed_bb = dead_store(orig);
-    // std::shared_ptr<InstructionSequence> transformed_bb = constant_fold(orig);
+    // for(auto i = 0; i < 2; i++){
     transformed_bb = constant_fold(transformed_bb.get());
+    // }
 
     // Create transformed basic block; note that we set its
     // code order to be the same as the code order of the original
@@ -83,7 +84,7 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
     Instruction* orig_ins = *i;
     Instruction* new_ins = orig_ins->duplicate();
 
-    // HighLevelFormatter formatter;
+    HighLevelFormatter formatter;
     // puts("beginning");
     // std::string formatted_ins = formatter.format_instruction(new_ins);
     // printf("\t%s\n", formatted_ins.c_str());
@@ -97,6 +98,8 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
       }
       if(orig_ins->get_num_operands() == 2 && orig_ins->get_operand(1).is_imm_ival()){
         vregVal[dest_vreg] = orig_ins->get_operand(1).get_imm_ival();
+        delete new_ins;
+        new_ins = nullptr;
       } else{
         for(int j = 1; j < orig_ins->get_num_operands(); j++){
           Operand op = orig_ins->get_operand(j);
@@ -125,8 +128,8 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
     }
     if(new_ins){
       result_iseq->append(new_ins);
-      // std::string formatted_ins = formatter.format_instruction(new_ins);
-      // printf("\t%s\n", formatted_ins.c_str());
+      std::string formatted_ins = formatter.format_instruction(new_ins);
+      printf("\t%s\n", formatted_ins.c_str());
       // puts("above is generated");
       new_ins = nullptr;
     }
@@ -154,7 +157,7 @@ MyOptimization::dead_store(const InstructionSequence* orig_bb){
 
 
       //If a vreg is not alive at the end of the basic block, that means it's not used for the rest of the basic blocks
-      if(!live_after.test(dest.get_base_reg())){
+      if(!live_after.test(dest.get_base_reg()) && dest.get_base_reg() != 0){
         preserve_instruction = false;
       }
     }
