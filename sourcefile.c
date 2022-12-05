@@ -1,18 +1,12 @@
 int main(void){
-  int n, i, sum, a, b, c, d;
-
-  n = 11;
-  i = 1;
-  sum = 0;
-  a = 1;
-  b = 2;
-  c = 3;
-  d = 4;
-
-  while(i <= n){
-    sum = sum + i;
-    i = i + 1;
+  int x, y, z;
+  x = 3;
+  y = x + 7;
+  z = 2 * y;
+  if(x < y){
+    z = x / 2 + y / 3;
+  } else{
+    z = x * y + y;
   }
-
-  return sum;
+  return z;
 }

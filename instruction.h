@@ -5,7 +5,7 @@
 
 // Instruction object type.
 // Can be used for either high-level or low-level code.
-class Instruction {
+class Instruction{
 private:
   int m_opcode;
   unsigned m_num_operands;
@@ -13,19 +13,20 @@ private:
 
 public:
   Instruction(int opcode);
-  Instruction(int opcode, const Operand &op1);
-  Instruction(int opcode, const Operand &op1, const Operand &op2);
-  Instruction(int opcode, const Operand &op1, const Operand &op2, const Operand &op3, unsigned num_operands = 3);
+  Instruction(int opcode, const Operand& op1);
+  Instruction(int opcode, const Operand& op1, const Operand& op2);
+  Instruction(int opcode, const Operand& op1, const Operand& op2, const Operand& op3, unsigned num_operands = 3);
 
   ~Instruction();
 
-  Instruction *duplicate() const { return new Instruction(*this); }
+  Instruction* duplicate() const{ return new Instruction(*this); }
 
   int get_opcode() const;
 
   unsigned get_num_operands() const;
 
-  const Operand &get_operand(unsigned index) const;
+  const Operand& get_operand(unsigned index) const;
+  void set_operand(Operand, int);
 };
 
 #endif // INSTRUCTION_H

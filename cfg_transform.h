@@ -27,7 +27,10 @@ public:
   //
   //    Instruction *orig_ins = /* an Instruction object */
   //    Instruction *dup_ins = orig_ins->duplicate();
-  virtual std::shared_ptr<InstructionSequence> transform_basic_block(const InstructionSequence* orig_bb) = 0;
+  // virtual std::shared_ptr<InstructionSequence> transform_basic_block(const InstructionSequence* orig_bb) = 0;
+
+  virtual std::shared_ptr<InstructionSequence> constant_fold(const InstructionSequence* orig_bb) = 0;
+  virtual std::shared_ptr<InstructionSequence> dead_store(const InstructionSequence* orig_bb) = 0;
 };
 
 class MyOptimization : public ControlFlowGraphTransform{
@@ -38,6 +41,7 @@ public:
   MyOptimization(const std::shared_ptr<ControlFlowGraph>& cfg);
   ~MyOptimization();
 
-  virtual std::shared_ptr<InstructionSequence> transform_basic_block(const InstructionSequence* orig_bb);
+  virtual std::shared_ptr<InstructionSequence> constant_fold(const InstructionSequence* orig_bb);
+  virtual std::shared_ptr<InstructionSequence> dead_store(const InstructionSequence* orig_bb);
 };
 #endif // CFG_TRANSFORM_H
