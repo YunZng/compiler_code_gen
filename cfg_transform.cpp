@@ -120,7 +120,7 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
     if(new_ins){
       result_iseq->append(new_ins);
       std::string formatted_ins = formatter.format_instruction(new_ins);
-      printf("\t%s\n", formatted_ins.c_str());
+      // printf("\t%s\n", formatted_ins.c_str());
       new_ins = nullptr;
     }
 
