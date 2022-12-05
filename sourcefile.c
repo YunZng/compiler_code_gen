@@ -3,10 +3,11 @@ struct Point{
 };
 
 int main(void){
-  struct Point p;
+  struct Point p, * q;
 
-  p.x = 2;
-  // p.y = 3;
+  q = &p;
 
-  return p.x;
+  q->y = 3;
+
+  return q->y;
 }
