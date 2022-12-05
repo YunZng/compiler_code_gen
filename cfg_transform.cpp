@@ -104,9 +104,9 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
         for(int j = 1; j < orig_ins->get_num_operands(); j++){
           Operand op = orig_ins->get_operand(j);
           if(!op.is_memref() && !op.is_non_reg()){
-            if(vregVal[op.get_base_reg()]){
-              new_ins = orig_ins->duplicate();
-              Operand new_op(Operand::IMM_IVAL, vregVal[op.get_base_reg()]);
+            int op_vreg = op.get_base_reg();
+            if(vregVal.find(op_vreg) != vregVal.end()){
+              Operand new_op(Operand::IMM_IVAL, vregVal[op_vreg]);
               new_ins->set_operand(new_op, j);
             }
           }
@@ -129,7 +129,7 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
     if(new_ins){
       result_iseq->append(new_ins);
       std::string formatted_ins = formatter.format_instruction(new_ins);
-      // printf("\t%s\n", formatted_ins.c_str());
+      printf("\t%s\n", formatted_ins.c_str());
       // puts("above is generated");
       new_ins = nullptr;
     }
