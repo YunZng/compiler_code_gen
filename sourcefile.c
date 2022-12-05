@@ -1,14 +1,12 @@
-struct Point{
-  int x, y;
-};
+// test for an integer promotion
+
+void print_i32(int n);
+void print_nl(void);
 
 int main(void){
-  struct Point p, * q;
-
-  q = &p;
-
-  q->x = 2;
-  q->y = 3;
-
-  return q->x + q->y;
+  char c;
+  c = -67;
+  print_i32(c);
+  print_nl();
+  return 0;
 }

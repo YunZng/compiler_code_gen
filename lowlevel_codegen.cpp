@@ -427,7 +427,7 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
     LowLevelOpcode sub = select_ll_opcode(MINS_SUBB, size);
     // ll_iseq->append(new Instruction(mov_opcode, sec_operand, r10));
     ll_iseq->append(new Instruction(mov_opcode, zero, first_operand));
-    ll_iseq->append(new Instruction(sub, r10, first_operand));
+    ll_iseq->append(new Instruction(sub, sec_operand, first_operand));
     return;
   }
   if(match_hl(HINS_add_b, hl_opcode) || match_hl(HINS_sub_b, hl_opcode)){
