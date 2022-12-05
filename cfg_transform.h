@@ -4,6 +4,7 @@
 #include <memory>
 #include "cfg.h"
 #include "live_vregs.h"
+#include <unordered_map>
 
 class ControlFlowGraphTransform{
 private:
@@ -43,5 +44,8 @@ public:
 
   virtual std::shared_ptr<InstructionSequence> constant_fold(const InstructionSequence* orig_bb);
   virtual std::shared_ptr<InstructionSequence> dead_store(const InstructionSequence* orig_bb);
+
+private:
+  void loop_check(int, Instruction*, Instruction*, std::unordered_map<int, long>&);
 };
 #endif // CFG_TRANSFORM_H

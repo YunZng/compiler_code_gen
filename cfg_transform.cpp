@@ -2,6 +2,7 @@
 #include "cfg.h"
 #include "cfg_transform.h"
 #include "highlevel_defuse.h"
+#include "highlevel.h"
 #include <unordered_map>
 #include "highlevel_formatter.h"
 
@@ -90,7 +91,13 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
     // printf("\t%s\n", formatted_ins.c_str());
 
     // if destination is changed, need to update
-    if(HighLevel::is_def(orig_ins)){
+    if(orig_ins->get_opcode() == HINS_localaddr){
+      Operand dest = orig_ins->get_operand(0);
+      int dest_vreg = dest.get_base_reg();
+      if(vregVal.find(dest_vreg) != vregVal.end()){
+        vregVal.erase(dest_vreg);
+      }
+    } else if(HighLevel::is_def(orig_ins)){
       Operand dest = orig_ins->get_operand(0);
       int dest_vreg = dest.get_base_reg();
       if(vregVal.find(dest_vreg) != vregVal.end()){
@@ -101,35 +108,15 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
         delete new_ins;
         new_ins = nullptr;
       } else{
-        for(int j = 1; j < orig_ins->get_num_operands(); j++){
-          Operand op = orig_ins->get_operand(j);
-          if(!op.is_memref() && !op.is_non_reg()){
-            int op_vreg = op.get_base_reg();
-            if(vregVal.find(op_vreg) != vregVal.end()){
-              Operand new_op(Operand::IMM_IVAL, vregVal[op_vreg]);
-              new_ins->set_operand(new_op, j);
-            }
-          }
-        }
+        loop_check(1, new_ins, orig_ins, vregVal);
       }
     } else{
-      for(int j = 0; j < orig_ins->get_num_operands(); j++){
-        Operand op = orig_ins->get_operand(j);
-        if(!op.is_memref() && !op.is_non_reg()){
-          int op_vreg = op.get_base_reg();
-          if(vregVal.find(op_vreg) != vregVal.end()){
-            new_ins = orig_ins->duplicate();
-            Operand new_op(Operand::IMM_IVAL, vregVal[op_vreg]);
-            new_ins->set_operand(new_op, j);
-          }
-
-        }
-      }
+      loop_check(0, new_ins, orig_ins, vregVal);
     }
     if(new_ins){
       result_iseq->append(new_ins);
       std::string formatted_ins = formatter.format_instruction(new_ins);
-      // printf("\t%s\n", formatted_ins.c_str());
+      printf("\t%s\n", formatted_ins.c_str());
       // puts("above is generated");
       new_ins = nullptr;
     }
@@ -169,7 +156,17 @@ MyOptimization::dead_store(const InstructionSequence* orig_bb){
   return result_iseq;
 }
 
-// bool is_regular(Operand dest){
-//   int vreg = dest.get_base_reg();
-//   return vreg <
-// }
+void MyOptimization::loop_check(int i, Instruction* new_ins, Instruction* orig_ins, std::unordered_map<int, long>& vregVal){
+  // if(orig_ins->get_opcode() != HINS_localaddr){
+  for(int j = 0; j < orig_ins->get_num_operands(); j++){
+    Operand op = orig_ins->get_operand(j);
+    if(!op.is_memref() && !op.is_non_reg()){
+      int op_vreg = op.get_base_reg();
+      if(vregVal.find(op_vreg) != vregVal.end()){
+        Operand new_op(Operand::IMM_IVAL, vregVal[op_vreg]);
+        new_ins->set_operand(new_op, j);
+      }
+    }
+  }
+  // }
+}
