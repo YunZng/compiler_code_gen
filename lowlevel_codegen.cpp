@@ -467,6 +467,10 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
       ll_iseq->append(new Instruction(mov_opcode, sec_operand, r10));
       sec_operand = r10;
     }
+    if(sec_operand.is_imm_ival() && trd_operand.is_imm_ival()){
+      ll_iseq->append(new Instruction(mov_opcode, trd_operand, r10));
+      trd_operand = r10;
+    }
     ll_iseq->append(new Instruction(cmp_opcode, trd_operand, sec_operand));
     //zero byte
     Operand r10b(Operand::MREG8, MREG_R10);
