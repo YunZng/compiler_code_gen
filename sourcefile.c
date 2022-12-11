@@ -1,18 +1,13 @@
-int sum(int* a, int n){
-  int i, sum;
-  sum = 0;
-  for(i = 0; i < n; i = i + 1){
-    sum = sum + a[i];
-  }
-  return sum;
+int sum(int a, int b){
+  int result;
+  result = a + b;
+  return result;
 }
 
 int main(void){
-  int arr[3];
-  arr[0] = 1;
-  arr[1] = 2;
-  arr[2] = 3;
-  int result;
-  result = sum(arr, 3);
-  return result;
+  int x, y, z;
+  x = 2;
+  y = 3;
+  z = sum(x, y);
+  return z;
 }

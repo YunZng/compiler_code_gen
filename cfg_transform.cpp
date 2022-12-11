@@ -188,17 +188,27 @@ MyOptimization::lvn(const InstructionSequence* orig_bb){
     if(match_hl(HINS_mov_b, opcode)){
       first = orig_ins->get_operand(0);
       second = orig_ins->get_operand(1);
-      if(first.is_reg()){
-        if(second.is_imm_ival()){
-          val_to_ival[first.get_base_reg()] = second;
+      if(first.is_reg() && (second.is_reg() || second.is_imm_ival())){
+        // if(val_to_ival.find(second.get_base_reg()) != val_to_ival.end()){
+        //   Operand sec = val_to_ival[second.get_base_reg()];
+        // }
+        // new_ins->set_operand(sec, 1);
+        // printf("wtf is you %d\n", first.get_base_reg());
+        recursive_find(second);
+        // printf("the second is %d\n", second.get_imm_ival());
+        val_to_ival[first.get_base_reg()] = second;
+        new_ins->set_operand(second, 1);
+        if(first.get_base_reg() > 9){
           delete new_ins;
           new_ins = nullptr;
-        } else{
-          if(val_to_ival.find(second.get_base_reg()) != val_to_ival.end()){
-            Operand sec = val_to_ival[second.get_base_reg()];
-            new_ins->set_operand(sec, 1);
-          }
         }
+        if(second.is_reg() && first.get_base_reg() == second.get_base_reg()){
+          delete new_ins;
+          new_ins = nullptr;
+        }
+        // if(second.is_imm_ival()){
+        // } else{
+        // }
       }
     } else if(HighLevel::is_def(orig_ins)){
 
@@ -216,8 +226,8 @@ MyOptimization::lvn(const InstructionSequence* orig_bb){
           recursive_find(second);
           if(second.is_imm_ival()){
             foldable++;
-            new_ins->set_operand(second, i);
           }
+          new_ins->set_operand(second, i);
         }
       }
       val_to_ival.erase(orig_ins->get_operand(0).get_base_reg());
@@ -321,7 +331,7 @@ long MyOptimization::set_val(std::map<long, long>& m, Operand o){
   return val++;
 }
 void MyOptimization::recursive_find(Operand& o){
-  if(o.is_imm_ival() || val_to_ival.find(o.get_base_reg()) == val_to_ival.end()){
+  if(o.is_imm_ival() || o.get_base_reg() < 10 || val_to_ival.find(o.get_base_reg()) == val_to_ival.end()){
     return;
   }
   o = val_to_ival[o.get_base_reg()];
