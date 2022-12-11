@@ -80,6 +80,16 @@ namespace{
 
 }
 
+// Check whether hl_opcode matches a range of opcodes, where base
+// is a _b variant opcode. Return true if the hl opcode is any variant
+// of that base.
+bool match_hl(int base, int hl_opcode){
+  if(base == HINS_sconv_bw){
+    return hl_opcode >= base && hl_opcode < (base + 6);
+  }
+  return hl_opcode >= base && hl_opcode < (base + 4);
+}
+
 LowLevelCodeGen::LowLevelCodeGen(bool optimize)
   : m_total_memory_storage(0)
   , m_optimize(optimize){
@@ -178,16 +188,6 @@ namespace{
   // These helper functions are provided to make it easier to handle
   // the way that instructions and operands vary based on operand size
   // ('b'=1 byte, 'w'=2 bytes, 'l'=4 bytes, 'q'=8 bytes.)
-
-  // Check whether hl_opcode matches a range of opcodes, where base
-  // is a _b variant opcode. Return true if the hl opcode is any variant
-  // of that base.
-  bool match_hl(int base, int hl_opcode){
-    if(base == HINS_sconv_bw){
-      return hl_opcode >= base && hl_opcode < (base + 6);
-    }
-    return hl_opcode >= base && hl_opcode < (base + 4);
-  }
 
   // For a low-level instruction with 4 size variants, return the correct
   // variant. base_opcode should be the "b" variant, and operand_size

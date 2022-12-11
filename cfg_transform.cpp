@@ -5,8 +5,7 @@
 #include "highlevel.h"
 #include <unordered_map>
 #include "highlevel_formatter.h"
-
-
+#include "lowlevel_codegen.h"
 
 ControlFlowGraphTransform::ControlFlowGraphTransform(const std::shared_ptr<ControlFlowGraph>& cfg)
   : m_cfg(cfg){
@@ -32,9 +31,9 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
     // Transform the instructions
     std::shared_ptr<InstructionSequence> transformed_bb = dead_store(orig);
     // for(auto i = 0; i < 2; i++){
-    transformed_bb = constant_fold(transformed_bb.get());
+    // transformed_bb = constant_fold(transformed_bb.get());
+    transformed_bb = lvn(transformed_bb.get());
     // }
-
     // Create transformed basic block; note that we set its
     // code order to be the same as the code order of the original
     // block (with the hope of eventually reconstructing an InstructionSequence
@@ -74,6 +73,41 @@ MyOptimization::MyOptimization(const std::shared_ptr<ControlFlowGraph>& cfg)
 MyOptimization::~MyOptimization(){
 }
 
+class MyHashFunction{
+public:
+  size_t operator()(const Instruction& i) const{
+    auto result = std::hash<int>()(i.get_opcode());
+    Operand first = i.get_operand(1);
+    Operand second = i.get_operand(2);
+    if(first.is_reg()){
+      result += std::hash<int>()(first.get_base_reg());
+    }
+    if(second.is_reg()){
+      result += std::hash<int>()(second.get_base_reg());
+    }
+    if(first.is_imm_ival()){
+      unsigned long temp = std::hash<int>()(first.get_imm_ival());
+      result += std::hash<unsigned long>()(temp);
+    }
+    if(second.is_imm_ival()){
+      unsigned long temp = std::hash<int>()(second.get_imm_ival());
+      result += std::hash<unsigned long>()(temp);
+    }
+    if(first.is_memref()){
+      unsigned long temp = std::hash<int>()(first.get_base_reg());
+      temp = std::hash<unsigned long>()(temp);
+      result += std::hash<unsigned long>()(temp);
+    }
+    if(first.is_memref()){
+      unsigned long temp = std::hash<int>()(second.get_base_reg());
+      temp = std::hash<unsigned long>()(temp);
+      result += std::hash<unsigned long>()(temp);
+    }
+    return result;
+  }
+};
+
+/*
 std::shared_ptr<InstructionSequence>
 MyOptimization::constant_fold(const InstructionSequence* orig_bb){
   const BasicBlock* orig_bb_as_basic_block = static_cast<const BasicBlock*>(orig_bb);
@@ -129,6 +163,116 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
   // return std::shared_ptr<InstructionSequence>(orig_bb->duplicate());
   return result_iseq;
 }
+*/
+static long val = 0;
+std::shared_ptr<InstructionSequence>
+MyOptimization::lvn(const InstructionSequence* orig_bb){
+  const BasicBlock* orig_bb_as_basic_block = static_cast<const BasicBlock*>(orig_bb);
+
+  std::shared_ptr<InstructionSequence> result_iseq(new InstructionSequence());
+  //hash the instruction
+  // std::unordered_map<Instruction, Operand, MyHashFunction> val_map;
+  // bool ignore_sconv = false;
+  for(auto i = orig_bb->cbegin(); i != orig_bb->cend(); ++i){
+    Instruction* orig_ins = *i;
+    Instruction* new_ins = orig_ins->duplicate();
+    Operand first, second;
+    int opcode = orig_ins->get_opcode();
+
+    HighLevelFormatter formatter;
+    // puts("beginning");
+    std::string formatted_ins = formatter.format_instruction(new_ins);
+    // printf("\t%s\n", formatted_ins.c_str());
+
+    // can ignore moving constant to register, but not memory
+    if(match_hl(HINS_mov_b, opcode)){
+      first = orig_ins->get_operand(0);
+      second = orig_ins->get_operand(1);
+      if(first.is_reg()){
+        if(second.is_imm_ival()){
+          val_to_ival[first.get_base_reg()] = second;
+          delete new_ins;
+          new_ins = nullptr;
+        } else{
+          if(val_to_ival.find(second.get_base_reg()) != val_to_ival.end()){
+            Operand sec = val_to_ival[second.get_base_reg()];
+            new_ins->set_operand(sec, 1);
+          }
+        }
+      }
+    } else if(HighLevel::is_def(orig_ins)){
+
+      int foldable = 0;
+      for(int i = 1; i < orig_ins->get_num_operands(); i++){
+        second = orig_ins->get_operand(i);
+        if(second.is_imm_ival()){
+          foldable++;
+        }
+        if(second.is_reg()){
+          // if(val_to_ival.find(second.get_base_reg()) != val_to_ival.end()){
+          //   Operand sec = val_to_ival[second.get_base_reg()];
+          //   new_ins->set_operand(sec, i);
+          // }
+          recursive_find(second);
+          if(second.is_imm_ival()){
+            foldable++;
+            new_ins->set_operand(second, i);
+          }
+        }
+      }
+      val_to_ival.erase(orig_ins->get_operand(0).get_base_reg());
+      // if all operands are constants for 2 operand operations, constant fold
+      if(foldable == 2){
+        Operand dest = orig_ins->get_operand(0);
+        first = new_ins->get_operand(1);
+        second = new_ins->get_operand(2);
+        assert(first.is_imm_ival() && second.is_imm_ival());
+        int first_ival = first.get_imm_ival();
+        int second_ival = second.get_imm_ival();
+        if(match_hl(HINS_add_b, opcode)){
+          first_ival = first_ival + second_ival;
+        } else if(match_hl(HINS_sub_b, opcode)){
+          first_ival = first_ival - second_ival;
+        } else if(match_hl(HINS_div_b, opcode)){
+          first_ival = first_ival / second_ival;
+        } else if(match_hl(HINS_mul_b, opcode)){
+          first_ival = first_ival * second_ival;
+        }
+        val_to_ival[dest.get_base_reg()] = Operand(Operand::IMM_IVAL, first_ival);
+        delete new_ins;
+        new_ins = nullptr;
+        // puts("reached");
+      }
+    } else if(orig_ins->get_opcode() == HINS_localaddr){
+      // ignore_sconv = true;
+      first = orig_ins->get_operand(0);
+      second = orig_ins->get_operand(1);
+
+    } else if(orig_ins->get_opcode() >= HINS_sconv_bw && orig_ins->get_opcode() <= HINS_sconv_lq){
+      first = orig_ins->get_operand(0);
+      second = orig_ins->get_operand(1);
+      recursive_find(second);
+      if(second.is_imm_ival()){
+        val_to_ival[first.get_base_reg()] = second;
+        delete new_ins;
+        new_ins = nullptr;
+      }
+    }
+
+
+    if(new_ins){
+      result_iseq->append(new_ins);
+      std::string formatted_ins = formatter.format_instruction(new_ins);
+      // printf("\t%s\n", formatted_ins.c_str());
+      new_ins = nullptr;
+    }
+
+  }
+  // puts("");
+
+  // return std::shared_ptr<InstructionSequence>(orig_bb->duplicate());
+  return result_iseq;
+}
 
 std::shared_ptr<InstructionSequence>
 MyOptimization::dead_store(const InstructionSequence* orig_bb){
@@ -168,4 +312,18 @@ void MyOptimization::loop_check(int i, Instruction*& new_ins, Instruction*& orig
     }
   }
   // }
+}
+long MyOptimization::set_val(std::map<long, long>& m, Operand o){
+  if(m.find(o.get_base_reg()) != m.end()){
+    return m[o.get_base_reg()];
+  }
+  m[o.get_base_reg()] = val;
+  return val++;
+}
+void MyOptimization::recursive_find(Operand& o){
+  if(o.is_imm_ival() || val_to_ival.find(o.get_base_reg()) == val_to_ival.end()){
+    return;
+  }
+  o = val_to_ival[o.get_base_reg()];
+  recursive_find(o);
 }

@@ -1,7 +1,15 @@
 Yulun Zeng
+For each optimization technique you implemented, your report should document
 
-When I was doing milestone 1, I did not implement high level code gen for data structures like nested array, array as struct field, and array of struct. As a result, I spent a lot of time adding those functionalities in highlevel code gen. 
+how the quality of the generated code was improved (include representative snippets of code before and after the optimization, for relevant test programs)
+how the efficiency of the generated code improved (i.e., how much did performance of the benchmark programs improve)
+Your report should also discuss what inefficiencies remain in the generated code, and what optimization techniques might be helpful for addressing them.
 
-For milestone 2, it was pretty straight foward. I just had to create some sort of mapping from high level to low level. There were a lot of reusable code, so I split the mapping into a few parts to avoid redundancies. The biggest challenge for this assignment was really code organization rather than problem solving.
+Please make a substantial effort to demonstrate improvements on “realistic” programs. As mentioned above, example29 and example31 are good candidates because they perform a substantial and realistic computation.
 
-I spent a lot of time on other coursework over the thanksgiving break, and I am barely catching up. I was only able to get 26 cases working, I am going to work on the nested arrays some time later, since they are needed for milestone 5.
+I started by copying the dead code elimination example. This optimization uses live variable analysis to eliminate some unnecessary operations in a block. Although this does not really affect anything since the example codes do not involve any dead codes, this optimization can be useful if there exists dead code. Overall, this optimization is minimal for the benchmark programs.
+
+Then I started working on constant propagation. Rather than assigning constants to virtual registers, we can use constant values directly. As a result, I avoided moving a constant to a register. This is one of the biggest improvements I have made, it regularly eliminates 1 to 2 lines of code for each operation that involves constant values. For example31, this optimization reduced 42 lines of lower level x86 code.
+
+For example 31, the speed after constant propagation approximately improves by 0.030s.
+For example 29, the speed after constant propagation approximately improves by 0.100s.
