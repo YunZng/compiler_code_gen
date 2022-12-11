@@ -32,7 +32,7 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
     std::shared_ptr<InstructionSequence> transformed_bb = dead_store(orig);
     // for(auto i = 0; i < 2; i++){
     // transformed_bb = constant_fold(transformed_bb.get());
-    transformed_bb = lvn(transformed_bb.get());
+    transformed_bb = lvn(transformed_bb.get(), orig);
     // }
     // Create transformed basic block; note that we set its
     // code order to be the same as the code order of the original
@@ -166,13 +166,13 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
 */
 static long val = 0;
 std::shared_ptr<InstructionSequence>
-MyOptimization::lvn(const InstructionSequence* orig_bb){
-  const BasicBlock* orig_bb_as_basic_block = static_cast<const BasicBlock*>(orig_bb);
-
+MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
   std::shared_ptr<InstructionSequence> result_iseq(new InstructionSequence());
   //hash the instruction
   // std::unordered_map<Instruction, Operand, MyHashFunction> val_map;
   // bool ignore_sconv = false;
+
+  LiveVregs::FactType live_after = m_live_vregs.get_fact_at_end_of_block(orig);
   for(auto i = orig_bb->cbegin(); i != orig_bb->cend(); ++i){
     Instruction* orig_ins = *i;
     Instruction* new_ins = orig_ins->duplicate();
@@ -189,16 +189,10 @@ MyOptimization::lvn(const InstructionSequence* orig_bb){
       first = orig_ins->get_operand(0);
       second = orig_ins->get_operand(1);
       if(first.is_reg() && (second.is_reg() || second.is_imm_ival())){
-        // if(val_to_ival.find(second.get_base_reg()) != val_to_ival.end()){
-        //   Operand sec = val_to_ival[second.get_base_reg()];
-        // }
-        // new_ins->set_operand(sec, 1);
-        // printf("wtf is you %d\n", first.get_base_reg());
         recursive_find(second);
-        // printf("the second is %d\n", second.get_imm_ival());
         val_to_ival[first.get_base_reg()] = second;
         new_ins->set_operand(second, 1);
-        if(first.get_base_reg() > 9){
+        if(first.get_base_reg() > 9 && !live_after.test(first.get_base_reg())){
           delete new_ins;
           new_ins = nullptr;
         }
@@ -206,9 +200,6 @@ MyOptimization::lvn(const InstructionSequence* orig_bb){
           delete new_ins;
           new_ins = nullptr;
         }
-        // if(second.is_imm_ival()){
-        // } else{
-        // }
       }
     } else if(HighLevel::is_def(orig_ins)){
 
@@ -219,10 +210,6 @@ MyOptimization::lvn(const InstructionSequence* orig_bb){
           foldable++;
         }
         if(second.is_reg()){
-          // if(val_to_ival.find(second.get_base_reg()) != val_to_ival.end()){
-          //   Operand sec = val_to_ival[second.get_base_reg()];
-          //   new_ins->set_operand(sec, i);
-          // }
           recursive_find(second);
           if(second.is_imm_ival()){
             foldable++;
@@ -251,10 +238,8 @@ MyOptimization::lvn(const InstructionSequence* orig_bb){
         val_to_ival[dest.get_base_reg()] = Operand(Operand::IMM_IVAL, first_ival);
         delete new_ins;
         new_ins = nullptr;
-        // puts("reached");
       }
     } else if(orig_ins->get_opcode() == HINS_localaddr){
-      // ignore_sconv = true;
       first = orig_ins->get_operand(0);
       second = orig_ins->get_operand(1);
 
@@ -280,7 +265,6 @@ MyOptimization::lvn(const InstructionSequence* orig_bb){
   }
   // puts("");
 
-  // return std::shared_ptr<InstructionSequence>(orig_bb->duplicate());
   return result_iseq;
 }
 
@@ -310,7 +294,6 @@ MyOptimization::dead_store(const InstructionSequence* orig_bb){
 }
 
 void MyOptimization::loop_check(int i, Instruction*& new_ins, Instruction*& orig_ins, std::unordered_map<int, long>& vregVal){
-  // if(orig_ins->get_opcode() != HINS_localaddr){
   for(int j = i; j < orig_ins->get_num_operands(); j++){
     Operand op = orig_ins->get_operand(j);
     if(!op.is_memref() && !op.is_non_reg()){
@@ -321,7 +304,6 @@ void MyOptimization::loop_check(int i, Instruction*& new_ins, Instruction*& orig
       }
     }
   }
-  // }
 }
 long MyOptimization::set_val(std::map<long, long>& m, Operand o){
   if(m.find(o.get_base_reg()) != m.end()){

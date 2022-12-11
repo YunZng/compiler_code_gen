@@ -32,7 +32,7 @@ public:
 
   // virtual std::shared_ptr<InstructionSequence> constant_fold(const InstructionSequence* orig_bb) = 0;
   virtual std::shared_ptr<InstructionSequence> dead_store(const InstructionSequence* orig_bb) = 0;
-  virtual std::shared_ptr<InstructionSequence> lvn(const InstructionSequence* orig_bb) = 0;
+  virtual std::shared_ptr<InstructionSequence> lvn(const InstructionSequence* orig_bb, const BasicBlock*) = 0;
 
 };
 
@@ -48,7 +48,7 @@ public:
 
   // virtual std::shared_ptr<InstructionSequence> constant_fold(const InstructionSequence* orig_bb);
   virtual std::shared_ptr<InstructionSequence> dead_store(const InstructionSequence* orig_bb);
-  virtual std::shared_ptr<InstructionSequence> lvn(const InstructionSequence* orig_bb);
+  virtual std::shared_ptr<InstructionSequence> lvn(const InstructionSequence* orig_bb, const BasicBlock*);
 
 private:
   void loop_check(int, Instruction*&, Instruction*&, std::unordered_map<int, long>&);
