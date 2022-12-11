@@ -209,7 +209,7 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
         if(second.is_imm_ival()){
           foldable++;
         }
-        if(second.is_reg()){
+        if(second.is_reg() && !m_live_vregs.get_fact_after_instruction(orig, orig_ins).test(second.get_base_reg())){
           recursive_find(second);
           if(second.is_imm_ival()){
             foldable++;
