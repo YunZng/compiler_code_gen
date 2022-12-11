@@ -177,7 +177,7 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
     Instruction* orig_ins = *i;
     Instruction* new_ins = orig_ins->duplicate();
     Operand first, second;
-    int opcode = orig_ins->get_opcode();
+    HighLevelOpcode opcode = (HighLevelOpcode)orig_ins->get_opcode();
 
     HighLevelFormatter formatter;
     // puts("beginning");
@@ -219,20 +219,21 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
       }
       val_to_ival.erase(orig_ins->get_operand(0).get_base_reg());
       // if all operands are constants for 2 operand operations, constant fold
-      if(foldable == 2){
+      opcode = is_basic_operation(opcode);
+      if(foldable == 2 && opcode){
         Operand dest = orig_ins->get_operand(0);
         first = new_ins->get_operand(1);
         second = new_ins->get_operand(2);
         assert(first.is_imm_ival() && second.is_imm_ival());
         int first_ival = first.get_imm_ival();
         int second_ival = second.get_imm_ival();
-        if(match_hl(HINS_add_b, opcode)){
+        if(opcode == HINS_add_b){
           first_ival = first_ival + second_ival;
-        } else if(match_hl(HINS_sub_b, opcode)){
+        } else if(opcode == HINS_sub_b){
           first_ival = first_ival - second_ival;
-        } else if(match_hl(HINS_div_b, opcode)){
+        } else if(opcode == HINS_div_b){
           first_ival = first_ival / second_ival;
-        } else if(match_hl(HINS_mul_b, opcode)){
+        } else if(opcode == HINS_mul_b){
           first_ival = first_ival * second_ival;
         }
         val_to_ival[dest.get_base_reg()] = Operand(Operand::IMM_IVAL, first_ival);
@@ -318,4 +319,17 @@ void MyOptimization::recursive_find(Operand& o){
   }
   o = val_to_ival[o.get_base_reg()];
   recursive_find(o);
+}
+HighLevelOpcode MyOptimization::is_basic_operation(HighLevelOpcode opcode){
+  if(match_hl(HINS_add_b, opcode)){
+    return HINS_add_b;
+  } else if(match_hl(HINS_sub_b, opcode)){
+    return HINS_sub_b;
+  } else if(match_hl(HINS_mul_b, opcode)){
+    return HINS_mul_b;
+  } else if(match_hl(HINS_div_b, opcode)){
+    return HINS_div_b;
+  } else{
+    return HINS_nop;
+  }
 }

@@ -1,13 +1,14 @@
-int sum(int a, int b){
-  int result;
-  result = a + b;
-  return result;
-}
-
 int main(void){
-  int x, y, z;
-  x = 2;
-  y = 3;
-  z = sum(x, y);
-  return z;
+  int n, i, sum;
+
+  n = 11;
+  i = 1;
+  sum = 0;
+
+  while(i <= n){
+    sum = sum + i;
+    i = i + 1;
+  }
+
+  return sum;
 }

@@ -5,6 +5,7 @@
 #include "cfg.h"
 #include "live_vregs.h"
 #include <unordered_map>
+#include "highlevel.h"
 
 class ControlFlowGraphTransform{
 private:
@@ -55,5 +56,6 @@ private:
   // void map_value(int, Operand, );
   long set_val(std::map<long, long>&, Operand);
   void recursive_find(Operand&);
+  HighLevelOpcode is_basic_operation(HighLevelOpcode);
 };
 #endif // CFG_TRANSFORM_H
