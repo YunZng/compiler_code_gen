@@ -195,8 +195,10 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
           if(orig_ins->get_operand(1).is_memref()){
             new_ins->set_operand(second.to_memref(), 1);
           } else{
-            delete new_ins;
-            new_ins = nullptr;
+            if(first.get_base_reg() > 9 && !live_after.test(first.get_base_reg())){
+              delete new_ins;
+              new_ins = nullptr;
+            }
           }
         }
         // cannot ignore argument assignment
@@ -277,12 +279,12 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
     if(new_ins){
       result_iseq->append(new_ins);
       std::string formatted_ins = formatter.format_instruction(new_ins);
-      // printf("\t%s\n", formatted_ins.c_str());
+      printf("\t%s\n", formatted_ins.c_str());
       new_ins = nullptr;
     }
 
   }
-  // puts("");
+  puts("");
 
   return result_iseq;
 }
