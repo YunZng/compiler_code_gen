@@ -32,7 +32,7 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
 
     // Transform the instructions
     std::shared_ptr<InstructionSequence> transformed_bb = dead_store(orig);
-    for(auto i = 0; i < 1; i++){
+    for(auto i = 0; i < 10; i++){
       transformed_bb = constant_fold(transformed_bb.get(), orig);
     }
     for(auto i = transformed_bb->cbegin(); i != transformed_bb->cend(); i++){
@@ -112,7 +112,7 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb, BasicBlock* or
           new_ins->set_operand(new_op, 1);
         }
       }
-      if(first.is_imm_ival() && !dest.is_memref()){
+      if(first.is_imm_ival() && !dest.is_memref() && dest.get_base_reg() > 9 && !m_live_vregs.get_fact_at_end_of_block(orig).test(dest.get_base_reg())){
         vregVal[dest_vreg] = first.get_imm_ival();
         delete new_ins;
         new_ins = nullptr;
@@ -143,9 +143,32 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb, BasicBlock* or
           }
         }
         if(first.is_imm_ival() && second.is_imm_ival()){
-          vregVal[dest_vreg] = first.get_imm_ival();
-          delete new_ins;
-          new_ins = nullptr;
+          HighLevelOpcode opcode = (HighLevelOpcode)orig_ins->get_opcode();
+          int first_ival = first.get_imm_ival();
+          int second_ival = second.get_imm_ival();
+          if(match_hl(HINS_add_b, opcode)){
+            first_ival = first_ival + second_ival;
+            vregVal[dest.get_base_reg()] = first_ival;
+            delete new_ins;
+            new_ins = nullptr;
+          } else if(match_hl(HINS_sub_b, opcode)){
+            first_ival = first_ival - second_ival;
+            vregVal[dest.get_base_reg()] = first_ival;
+            delete new_ins;
+            new_ins = nullptr;
+          } else if(match_hl(HINS_div_b, opcode)){
+            first_ival = first_ival / second_ival;
+            vregVal[dest.get_base_reg()] = first_ival;
+            delete new_ins;
+            new_ins = nullptr;
+          } else if(match_hl(HINS_mul_b, opcode)){
+            first_ival = first_ival * second_ival;
+            vregVal[dest.get_base_reg()] = first_ival;
+            delete new_ins;
+            new_ins = nullptr;
+          }
+        } else{
+          vregVal.erase(dest.get_base_reg());
         }
       }
     }

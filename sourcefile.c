@@ -1,14 +1,15 @@
-struct Point{
-  int x, y;
-};
-
 int main(void){
-  struct Point p, * q;
+  int a, b, c;
 
-  q = &p;
+  a = 2;
+  b = 3;
+  c = 0;
 
-  q->x = 2;
-  q->y = 3;
+  if(a + 1 == b){
+    c = 1;
+  } else{
+    c = 2;
+  }
 
-  return q->x + q->y;
+  return c;
 }
