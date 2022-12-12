@@ -42,6 +42,7 @@ private:
   std::string m_label;
 
 public:
+  long use_cnt;
   Operand(Kind kind = NONE);
 
   // ival1 is either basereg or imm_ival (depending on operand Kind)

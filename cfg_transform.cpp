@@ -3,9 +3,10 @@
 #include "cfg_transform.h"
 #include "highlevel_defuse.h"
 #include "highlevel.h"
-#include <unordered_map>
+#include <map>
 #include "highlevel_formatter.h"
 #include "lowlevel_codegen.h"
+#include "lowlevel.h"
 
 
 
@@ -35,6 +36,8 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
     for(auto i = 0; i < 10; i++){
       transformed_bb = constant_fold(transformed_bb.get(), orig);
     }
+    transformed_bb = reg_alloc(transformed_bb.get(), orig);
+
     for(auto i = transformed_bb->cbegin(); i != transformed_bb->cend(); i++){
       HighLevelFormatter formatter;
       std::string formatted_ins = formatter.format_instruction(*i);
@@ -89,11 +92,6 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb, BasicBlock* or
   for(auto i = orig_bb->cbegin(); i != orig_bb->cend(); ++i){
     Instruction* orig_ins = *i;
     Instruction* new_ins = orig_ins->duplicate();
-
-    HighLevelFormatter formatter;
-    // puts("beginning");
-    std::string formatted_ins = formatter.format_instruction(new_ins);
-    // printf("\t%s\n", formatted_ins.c_str());
 
     // if destination is changed, need to update
     if(orig_ins->get_opcode() == HINS_localaddr){
@@ -178,8 +176,6 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb, BasicBlock* or
     }
     if(new_ins){
       result_iseq->append(new_ins);
-      std::string formatted_ins = formatter.format_instruction(new_ins);
-      // printf("\t%s\n", formatted_ins.c_str());
       new_ins = nullptr;
     }
 
@@ -209,6 +205,56 @@ MyOptimization::dead_store(const InstructionSequence* orig_bb){
       result_iseq->append(orig_ins->duplicate());
   }
 
+  return result_iseq;
+}
+
+struct myComp{
+  bool operator()(const Operand* a, const Operand* b)const{
+    return a->use_cnt < b->use_cnt;
+  }
+};
+bool myComp2(std::pair<Operand*, int> a, std::pair<Operand*, int> b){
+  return a.first->use_cnt < b.first->use_cnt;
+}
+std::shared_ptr<InstructionSequence>
+MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
+  std::shared_ptr<InstructionSequence> result_iseq(new InstructionSequence());
+  // register maps to virtual register(holder)
+  std::multimap<Operand*, int, myComp> registers;
+  for(int i = 12; i < 16; i++){
+    Operand* reg = new Operand((Operand::Kind)4, (MachineReg)i);
+    registers.emplace(reg, 0);
+  }
+  LiveVregs::FactType live_after = m_live_vregs.get_fact_at_end_of_block(orig);
+  for(auto j = orig_bb->cbegin(); j != orig_bb->cend(); ++j){
+    Instruction* orig_ins = *j;
+    Instruction* new_ins = orig_ins->duplicate();
+    HighLevelOpcode opcode = (HighLevelOpcode)orig_ins->get_opcode();
+
+    for(int i = 0; i < new_ins->get_num_operands(); i++){
+      Operand op = new_ins->get_operand(i);
+      if(op.has_base_reg() && !live_after.test(op.get_base_reg()) && opcode > 0 && opcode <= 88){
+        auto first_pair = *min_element(registers.begin(), registers.end(), &myComp2);
+        //unoccupied
+        if(first_pair.second == 0 || first_pair.second == op.get_base_reg()){
+          int size = highlevel_opcode_get_source_operand_size(opcode);
+          Operand reg(select_mreg_kind(size), first_pair.first->get_base_reg());
+          new_ins->set_operand(reg, i);
+          first_pair.first->use_cnt += 1;
+        } else{
+
+        }
+      }
+    }
+
+    if(new_ins){
+      result_iseq->append(new_ins);
+      HighLevelFormatter formatter;
+      std::string formatted_ins = formatter.format_instruction(new_ins);
+      // printf("\t%s\n", formatted_ins.c_str());
+      new_ins = nullptr;
+    }
+  }
   return result_iseq;
 }
 

@@ -31,6 +31,7 @@ public:
   // virtual std::shared_ptr<InstructionSequence> transform_basic_block(const InstructionSequence* orig_bb) = 0;
 
   virtual std::shared_ptr<InstructionSequence> constant_fold(const InstructionSequence* orig_bb, BasicBlock*) = 0;
+  virtual std::shared_ptr<InstructionSequence> reg_alloc(const InstructionSequence* orig_bb, BasicBlock*) = 0;
   virtual std::shared_ptr<InstructionSequence> dead_store(const InstructionSequence* orig_bb) = 0;
 };
 
@@ -43,6 +44,7 @@ public:
   ~MyOptimization();
 
   virtual std::shared_ptr<InstructionSequence> constant_fold(const InstructionSequence* orig_bb, BasicBlock* orig);
+  virtual std::shared_ptr<InstructionSequence> reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig);
   virtual std::shared_ptr<InstructionSequence> dead_store(const InstructionSequence* orig_bb);
 
 private:

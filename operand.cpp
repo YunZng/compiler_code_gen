@@ -64,7 +64,8 @@ Operand::Operand(Kind kind)
   : m_kind(kind)
   , m_basereg(-1)
   , m_index_reg(-1)
-  , m_imm_ival(-1){
+  , m_imm_ival(-1)
+  , use_cnt(0){
 }
 
 // ival1 is either basereg or imm_ival (depending on operand Kind)

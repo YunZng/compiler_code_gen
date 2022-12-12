@@ -25,6 +25,7 @@ private:
   void translate_instruction(Instruction* hl_ins, const std::shared_ptr<InstructionSequence>& ll_iseq);
   Operand get_ll_operand(Operand hl_opcode, int size, const std::shared_ptr<InstructionSequence>& ll_iseq);
 };
+Operand::Kind select_mreg_kind(int operand_size);
 bool match_hl(int base, int hl_opcode);
 
 #endif // LOWLEVEL_CODEGEN_H
