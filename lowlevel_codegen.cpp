@@ -173,88 +173,88 @@ std::shared_ptr<InstructionSequence> LowLevelCodeGen::translate_hl_to_ll(const s
   return ll_iseq;
 }
 
-namespace{
 
-  // These helper functions are provided to make it easier to handle
-  // the way that instructions and operands vary based on operand size
-  // ('b'=1 byte, 'w'=2 bytes, 'l'=4 bytes, 'q'=8 bytes.)
 
-  // Check whether hl_opcode matches a range of opcodes, where base
-  // is a _b variant opcode. Return true if the hl opcode is any variant
-  // of that base.
-  bool match_hl(int base, int hl_opcode){
-    if(base == HINS_sconv_bw){
-      return hl_opcode >= base && hl_opcode < (base + 6);
-    }
-    return hl_opcode >= base && hl_opcode < (base + 4);
+// These helper functions are provided to make it easier to handle
+// the way that instructions and operands vary based on operand size
+// ('b'=1 byte, 'w'=2 bytes, 'l'=4 bytes, 'q'=8 bytes.)
+
+// Check whether hl_opcode matches a range of opcodes, where base
+// is a _b variant opcode. Return true if the hl opcode is any variant
+// of that base.
+bool match_hl(int base, int hl_opcode){
+  if(base == HINS_sconv_bw){
+    return hl_opcode >= base && hl_opcode < (base + 6);
   }
-
-  // For a low-level instruction with 4 size variants, return the correct
-  // variant. base_opcode should be the "b" variant, and operand_size
-  // should be the operand size in bytes (1, 2, 4, or 8.)
-  LowLevelOpcode select_ll_opcode(LowLevelOpcode base_opcode, int operand_size){
-    int off;
-
-    switch(operand_size){
-      case 1: // 'b' variant
-        off = 0; break;
-      case 2: // 'w' variant
-        off = 1; break;
-      case 4: // 'l' variant
-        off = 2; break;
-      case 8: // 'q' variant
-        off = 3; break;
-      default:
-        assert(false);
-        off = 3;
-    }
-
-    return LowLevelOpcode(int(base_opcode) + off);
-  }
-  LowLevelOpcode select_ll_opcode(LowLevelOpcode base_opcode, int first_size, int sec_size){
-    int off = 0;
-    if(first_size == 1){
-      if(sec_size == 2){
-        off = 0;
-      } else if(sec_size == 4){
-        off = 1;
-      } else if(sec_size == 8){
-        off = 2;
-      } else{}
-    } else if(first_size == 2){
-      if(sec_size == 4){
-        off = 3;
-      } else if(sec_size == 8){
-        off = 4;
-      } else{}
-    } else if(first_size == 4){
-      if(sec_size == 8){
-        off = 5;
-      } else{}
-    } else{}
-
-    return LowLevelOpcode(int(base_opcode) + off);
-  }
-
-  // Get the correct Operand::Kind value for a machine register
-  // of the specified size (1, 2, 4, or 8 bytes.)
-  Operand::Kind select_mreg_kind(int operand_size){
-    switch(operand_size){
-      case 1:
-        return Operand::MREG8;
-      case 2:
-        return Operand::MREG16;
-      case 4:
-        return Operand::MREG32;
-      case 8:
-        return Operand::MREG64;
-      default:
-        assert(false);
-        return Operand::MREG64;
-    }
-  }
-
+  return hl_opcode >= base && hl_opcode < (base + 4);
 }
+
+// For a low-level instruction with 4 size variants, return the correct
+// variant. base_opcode should be the "b" variant, and operand_size
+// should be the operand size in bytes (1, 2, 4, or 8.)
+LowLevelOpcode select_ll_opcode(LowLevelOpcode base_opcode, int operand_size){
+  int off;
+
+  switch(operand_size){
+    case 1: // 'b' variant
+      off = 0; break;
+    case 2: // 'w' variant
+      off = 1; break;
+    case 4: // 'l' variant
+      off = 2; break;
+    case 8: // 'q' variant
+      off = 3; break;
+    default:
+      assert(false);
+      off = 3;
+  }
+
+  return LowLevelOpcode(int(base_opcode) + off);
+}
+LowLevelOpcode select_ll_opcode(LowLevelOpcode base_opcode, int first_size, int sec_size){
+  int off = 0;
+  if(first_size == 1){
+    if(sec_size == 2){
+      off = 0;
+    } else if(sec_size == 4){
+      off = 1;
+    } else if(sec_size == 8){
+      off = 2;
+    } else{}
+  } else if(first_size == 2){
+    if(sec_size == 4){
+      off = 3;
+    } else if(sec_size == 8){
+      off = 4;
+    } else{}
+  } else if(first_size == 4){
+    if(sec_size == 8){
+      off = 5;
+    } else{}
+  } else{}
+
+  return LowLevelOpcode(int(base_opcode) + off);
+}
+
+// Get the correct Operand::Kind value for a machine register
+// of the specified size (1, 2, 4, or 8 bytes.)
+Operand::Kind select_mreg_kind(int operand_size){
+  switch(operand_size){
+    case 1:
+      return Operand::MREG8;
+    case 2:
+      return Operand::MREG16;
+    case 4:
+      return Operand::MREG32;
+    case 8:
+      return Operand::MREG64;
+    default:
+      assert(false);
+      return Operand::MREG64;
+  }
+}
+
+
 
 void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shared_ptr<InstructionSequence>& ll_iseq){
   HighLevelOpcode hl_opcode = HighLevelOpcode(hl_ins->get_opcode());

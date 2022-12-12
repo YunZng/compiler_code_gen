@@ -5,6 +5,7 @@
 #include "highlevel.h"
 #include <unordered_map>
 #include "highlevel_formatter.h"
+#include "lowlevel_codegen.h"
 
 
 
@@ -101,8 +102,22 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb, BasicBlock* or
       if(vregVal.find(dest_vreg) != vregVal.end()){
         vregVal.erase(dest_vreg);
       }
+    } else if(match_hl(HINS_mov_b, orig_ins->get_opcode())){
+      Operand dest = orig_ins->get_operand(0);
+      Operand first = orig_ins->get_operand(1);
+      int dest_vreg = dest.get_base_reg();
+      if(first.is_reg()){
+        if(vregVal.find(first.get_base_reg()) != vregVal.end() && !m_live_vregs.get_fact_after_instruction(orig, orig_ins).test(first.get_base_reg())){
+          Operand new_op(Operand::IMM_IVAL, vregVal[first.get_base_reg()]);
+          new_ins->set_operand(new_op, 1);
+        }
+      }
+      if(first.is_imm_ival() && !dest.is_memref()){
+        vregVal[dest_vreg] = first.get_imm_ival();
+        delete new_ins;
+        new_ins = nullptr;
+      }
     } else if(HighLevel::is_def(orig_ins)){
-
       Operand dest = orig_ins->get_operand(0);
       Operand first = orig_ins->get_operand(1);
       int dest_vreg = dest.get_base_reg();
@@ -117,9 +132,6 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb, BasicBlock* or
           vregVal[dest_vreg] = first.get_imm_ival();
           delete new_ins;
           new_ins = nullptr;
-        } else if(first.is_reg() && vregVal.find(first.get_base_reg()) != vregVal.end()){
-          Operand new_op(Operand::IMM_IVAL, vregVal[first.get_base_reg()]);
-          new_ins->set_operand(new_op, 1);
         }
       }
       if(orig_ins->get_num_operands() == 3){
@@ -136,8 +148,6 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb, BasicBlock* or
           new_ins = nullptr;
         }
       }
-    } else{
-      loop_check(0, new_ins, orig_ins, vregVal);
     }
     if(new_ins){
       result_iseq->append(new_ins);
@@ -176,5 +186,5 @@ MyOptimization::dead_store(const InstructionSequence* orig_bb){
 }
 
 void MyOptimization::loop_check(int i, Instruction*& new_ins, Instruction*& orig_ins, std::unordered_map<int, long>& vregVal){
-
+  puts("diuwa");
 }
