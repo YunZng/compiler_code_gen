@@ -294,7 +294,6 @@ void HighLevelCodegen::visit_unary_expression(Node* n){
       } else{
         dest = var->get_op().to_memref();
       }
-
       break;
     }
     case TOK_AMPERSAND:{

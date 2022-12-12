@@ -203,7 +203,12 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
             new_ins = nullptr;
           }
         } else if(first.is_memref()){
-          new_ins->set_operand(val_to_ival[first.get_base_reg()].to_memref(), 0);
+          if(val_to_ival.find(first.get_base_reg()) != val_to_ival.end()){
+            Operand candidate = val_to_ival[first.get_base_reg()];
+            if(candidate.is_reg()){
+              new_ins->set_operand(candidate.to_memref(), 0);
+            }
+          }
         }
       }
     } else if(HighLevel::is_def(orig_ins)){
