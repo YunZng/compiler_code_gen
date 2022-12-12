@@ -36,7 +36,7 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
     for(auto i = 0; i < 10; i++){
       transformed_bb = constant_fold(transformed_bb.get(), orig);
     }
-    transformed_bb = reg_alloc(transformed_bb.get(), orig);
+    // transformed_bb = reg_alloc(transformed_bb.get(), orig);
 
     for(auto i = transformed_bb->cbegin(); i != transformed_bb->cend(); i++){
       HighLevelFormatter formatter;
@@ -223,7 +223,7 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
   // register maps to virtual register(holder)
   std::multimap<Operand*, int, myComp> registers;
   std::map<int, Operand> local_reg;
-  for(int i = 0; i < 16; i++){
+  for(int i = 12; i < 16; i++){
     Operand* reg = new Operand((Operand::Kind)4, (MachineReg)i);
     registers.emplace(reg, 0);
   }
@@ -242,11 +242,7 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
         for(auto& p : registers){
           if(p.second == op.get_base_reg()){
             Operand reg = local_reg[op.get_base_reg()];
-            if(new_ins->get_operand(i).is_memref()){
-              new_ins->set_operand(reg.to_memref(), i);
-            } else{
-              new_ins->set_operand(reg, i);
-            }
+            new_ins->set_operand(reg, i);
             p.first->use_cnt += 1;
             break;
           } else if(p.second == 0 && opcode > 0 && opcode <= 88){
@@ -254,11 +250,7 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
             auto kind = select_mreg_kind(size);
             auto b_reg = p.first->get_base_reg();
             Operand reg = Operand(kind, b_reg);
-            if(new_ins->get_operand(i).is_memref()){
-              new_ins->set_operand(reg.to_memref(), i);
-            } else{
-              new_ins->set_operand(reg, i);
-            }
+            new_ins->set_operand(reg, i);
             p.first->use_cnt += 1;
             p.second = op.get_base_reg();
             local_reg[op.get_base_reg()] = reg;
