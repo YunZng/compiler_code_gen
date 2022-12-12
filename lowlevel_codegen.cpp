@@ -531,12 +531,13 @@ Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode, int size, const std::
     return r11.to_memref();
   }
   // printf("hlopcode, %d", hl_opcode.get_kind());
-  return Operand(Operand::MREG64_MEM_OFF, MREG_RBP, (10000 * 8) - m_total_memory_storage);
+  // return Operand(Operand::MREG64_MEM_OFF, MREG_RBP, (10000 * 8) - m_total_memory_storage);
+  return hl_opcode;
 }
 
 /*
 
-alias back='cd ~/compilers/assign04-yulun/compiler_code_gen/'; alias test4='cd ~/compilers/fall2022-tests/assign04/'; alias test5='cd ~/compilers/fall2022-tests/assign05/'; alias get='back; make clean; git pull origin old_code; make clean; make depend; make -j;'; export ASSIGN04_DIR=~/compilers/assign04-yulun/compiler_code_gen/;export ASSIGN05_DIR=~/compilers/assign04-yulun/compiler_code_gen/;
+alias back='cd ~/compilers/assign04-yulun/compiler_code_gen/'; alias test4='cd ~/compilers/fall2022-tests/assign04/'; alias test5='cd ~/compilers/fall2022-tests/assign05/'; alias get='back; make clean; git stash; git pull origin old_code; make clean; make depend; make -j;'; export ASSIGN04_DIR=~/compilers/assign04-yulun/compiler_code_gen/;export ASSIGN05_DIR=~/compilers/assign04-yulun/compiler_code_gen/;
 alias try='./run_all.rb -o';
 
 */
