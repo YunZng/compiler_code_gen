@@ -233,7 +233,7 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
 
     for(int i = 0; i < new_ins->get_num_operands(); i++){
       Operand op = new_ins->get_operand(i);
-      if(op.has_base_reg() && !live_after.test(op.get_base_reg()) && opcode > 0 && opcode <= 88){
+      if(op.has_base_reg() && !live_after.test(op.get_base_reg()) && opcode > 0 && opcode <= 88 && op.get_base_reg() > 9){
         auto first_pair = *min_element(registers.begin(), registers.end(), &myComp2);
         //unoccupied
         if(first_pair.second == 0 || first_pair.second == op.get_base_reg()){
