@@ -187,28 +187,36 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
     if(match_hl(HINS_mov_b, opcode)){
       first = orig_ins->get_operand(0);
       second = orig_ins->get_operand(1);
-      if(second.is_reg() || second.is_imm_ival()){
-        recursive_find(second);
-        new_ins->set_operand(second, 1);
-        if(first.is_reg()){
-          val_to_ival[first.get_base_reg()] = second;
-          // cannot ignore argument assignment
-          if(first.get_base_reg() > 9 && !live_after.test(first.get_base_reg())){
+      recursive_find(second);
+      new_ins->set_operand(second, 1);
+      if(first.is_reg()){
+        val_to_ival[first.get_base_reg()] = second;
+        if(second.is_reg()){
+          if(orig_ins->get_operand(1).is_memref()){
+            new_ins->set_operand(second.to_memref(), 1);
+          } else{
             delete new_ins;
             new_ins = nullptr;
           }
-          // can ignore if both registers are the same
-          if(second.is_reg() && first.get_base_reg() == second.get_base_reg()){
-            delete new_ins;
-            new_ins = nullptr;
+        }
+        // cannot ignore argument assignment
+        else if(first.get_base_reg() > 9 && !live_after.test(first.get_base_reg())){
+          delete new_ins;
+          new_ins = nullptr;
+        }
+        // can ignore if both registers are the same
+        else if(second.is_reg() && first.get_base_reg() == second.get_base_reg()){
+          delete new_ins;
+          new_ins = nullptr;
+        }
+      } else if(first.is_memref()){
+        if(val_to_ival.find(first.get_base_reg()) != val_to_ival.end()){
+          Operand candidate = val_to_ival[first.get_base_reg()];
+          if(candidate.is_reg()){
+            candidate = candidate.to_memref();
+            new_ins->set_operand(candidate, 0);
           }
-        } else if(first.is_memref()){
-          if(val_to_ival.find(first.get_base_reg()) != val_to_ival.end()){
-            Operand candidate = val_to_ival[first.get_base_reg()];
-            if(candidate.is_reg()){
-              new_ins->set_operand(candidate.to_memref(), 0);
-            }
-          }
+          val_to_ival[first.get_base_reg()] = candidate;
         }
       }
     } else if(HighLevel::is_def(orig_ins)){
@@ -327,7 +335,11 @@ void MyOptimization::recursive_find(Operand& o){
   if(o.is_imm_ival() || o.get_base_reg() < 10 || val_to_ival.find(o.get_base_reg()) == val_to_ival.end()){
     return;
   }
-  o = val_to_ival[o.get_base_reg()];
+  Operand key = val_to_ival[o.get_base_reg()];
+  if(key.has_base_reg() && o.get_base_reg() == key.get_base_reg()){
+    return;
+  }
+  o = key;
   recursive_find(o);
 }
 HighLevelOpcode MyOptimization::is_basic_operation(HighLevelOpcode opcode){
