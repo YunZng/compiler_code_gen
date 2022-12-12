@@ -30,7 +30,7 @@ public:
   //    Instruction *dup_ins = orig_ins->duplicate();
   // virtual std::shared_ptr<InstructionSequence> transform_basic_block(const InstructionSequence* orig_bb) = 0;
 
-  virtual std::shared_ptr<InstructionSequence> constant_fold(const InstructionSequence* orig_bb) = 0;
+  virtual std::shared_ptr<InstructionSequence> constant_fold(const InstructionSequence* orig_bb, BasicBlock*) = 0;
   virtual std::shared_ptr<InstructionSequence> dead_store(const InstructionSequence* orig_bb) = 0;
 };
 
@@ -42,7 +42,7 @@ public:
   MyOptimization(const std::shared_ptr<ControlFlowGraph>& cfg);
   ~MyOptimization();
 
-  virtual std::shared_ptr<InstructionSequence> constant_fold(const InstructionSequence* orig_bb);
+  virtual std::shared_ptr<InstructionSequence> constant_fold(const InstructionSequence* orig_bb, BasicBlock* orig);
   virtual std::shared_ptr<InstructionSequence> dead_store(const InstructionSequence* orig_bb);
 
 private:

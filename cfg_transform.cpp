@@ -31,9 +31,14 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
 
     // Transform the instructions
     std::shared_ptr<InstructionSequence> transformed_bb = dead_store(orig);
-    // for(auto i = 0; i < 2; i++){
-    transformed_bb = constant_fold(transformed_bb.get());
-    // }
+    for(auto i = 0; i < 4; i++){
+      transformed_bb = constant_fold(transformed_bb.get(), orig);
+    }
+    for(auto i = transformed_bb->cbegin(); i != transformed_bb->cend(); i++){
+      HighLevelFormatter formatter;
+      std::string formatted_ins = formatter.format_instruction(*i);
+      // printf("\t%s\n", formatted_ins.c_str());
+    }
 
     // Create transformed basic block; note that we set its
     // code order to be the same as the code order of the original
@@ -75,8 +80,7 @@ MyOptimization::~MyOptimization(){
 }
 
 std::shared_ptr<InstructionSequence>
-MyOptimization::constant_fold(const InstructionSequence* orig_bb){
-  const BasicBlock* orig_bb_as_basic_block = static_cast<const BasicBlock*>(orig_bb);
+MyOptimization::constant_fold(const InstructionSequence* orig_bb, BasicBlock* orig){
 
   std::shared_ptr<InstructionSequence> result_iseq(new InstructionSequence());
   std::unordered_map<int, long> vregVal;
@@ -98,17 +102,40 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
         vregVal.erase(dest_vreg);
       }
     } else if(HighLevel::is_def(orig_ins)){
-      loop_check(1, new_ins, orig_ins, vregVal);
 
       Operand dest = orig_ins->get_operand(0);
+      Operand first = orig_ins->get_operand(1);
       int dest_vreg = dest.get_base_reg();
-      if(vregVal.find(dest_vreg) != vregVal.end()){
-        vregVal.erase(dest_vreg);
+      if(first.is_reg()){
+        if(vregVal.find(first.get_base_reg()) != vregVal.end() && !m_live_vregs.get_fact_after_instruction(orig, orig_ins).test(first.get_base_reg())){
+          Operand new_op(Operand::IMM_IVAL, vregVal[first.get_base_reg()]);
+          new_ins->set_operand(new_op, 1);
+        }
       }
-      if(orig_ins->get_num_operands() == 2 && orig_ins->get_operand(1).is_imm_ival()){
-        vregVal[dest_vreg] = orig_ins->get_operand(1).get_imm_ival();
-        delete new_ins;
-        new_ins = nullptr;
+      if(orig_ins->get_num_operands() == 2){
+
+        if(first.is_imm_ival()){
+          vregVal[dest_vreg] = first.get_imm_ival();
+          delete new_ins;
+          new_ins = nullptr;
+        } else if(first.is_reg() && vregVal.find(first.get_base_reg()) != vregVal.end()){
+          Operand new_op(Operand::IMM_IVAL, vregVal[first.get_base_reg()]);
+          new_ins->set_operand(new_op, 1);
+        }
+      }
+      if(orig_ins->get_num_operands() == 3){
+        Operand second = orig_ins->get_operand(2);
+        if(second.is_reg()){
+          if(vregVal.find(second.get_base_reg()) != vregVal.end() && !m_live_vregs.get_fact_after_instruction(orig, orig_ins).test(second.get_base_reg())){
+            Operand new_op(Operand::IMM_IVAL, vregVal[second.get_base_reg()]);
+            new_ins->set_operand(new_op, 1);
+          }
+        }
+        if(first.is_imm_ival() && second.is_imm_ival()){
+          vregVal[dest_vreg] = first.get_imm_ival();
+          delete new_ins;
+          new_ins = nullptr;
+        }
       }
     } else{
       loop_check(0, new_ins, orig_ins, vregVal);
@@ -121,8 +148,6 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
     }
 
   }
-
-  // return std::shared_ptr<InstructionSequence>(orig_bb->duplicate());
   return result_iseq;
 }
 
@@ -152,16 +177,5 @@ MyOptimization::dead_store(const InstructionSequence* orig_bb){
 }
 
 void MyOptimization::loop_check(int i, Instruction*& new_ins, Instruction*& orig_ins, std::unordered_map<int, long>& vregVal){
-  // if(orig_ins->get_opcode() != HINS_localaddr){
-  for(int j = i; j < orig_ins->get_num_operands(); j++){
-    Operand op = orig_ins->get_operand(j);
-    if(!op.is_memref() && !op.is_non_reg()){
-      int op_vreg = op.get_base_reg();
-      if(vregVal.find(op_vreg) != vregVal.end()){
-        Operand new_op(Operand::IMM_IVAL, vregVal[op_vreg]);
-        new_ins->set_operand(new_op, j);
-      }
-    }
-  }
-  // }
+
 }
