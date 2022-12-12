@@ -110,10 +110,6 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb){
         delete new_ins;
         new_ins = nullptr;
       }
-      // else{
-      //   printf("has %d\n", vregVal.find(11) != vregVal.end());
-
-      // }
     } else{
       loop_check(0, new_ins, orig_ins, vregVal);
     }
