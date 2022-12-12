@@ -1,13 +1,12 @@
+// test for an integer promotion
+
+void print_i32(int n);
+void print_nl(void);
+
 int main(void){
-  int a, b, c;
-
-  a = 2;
-  b = 3;
-  c = 1;
-
-  if(a + 1 == b){
-    c = 0;
-  }
-
-  return c;
+  char c;
+  c = -67;
+  print_i32(c);
+  print_nl();
+  return 0;
 }

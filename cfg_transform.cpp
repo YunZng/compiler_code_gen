@@ -128,10 +128,12 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb, BasicBlock* or
         }
       }
       if(orig_ins->get_num_operands() == 2){
-        if(first.is_imm_ival()){
+        if(first.is_imm_ival() && !match_hl(HINS_neg_b, orig_ins->get_opcode())){
           vregVal[dest_vreg] = first.get_imm_ival();
           delete new_ins;
           new_ins = nullptr;
+        } else{
+          vregVal.erase(dest.get_base_reg());
         }
       }
       if(orig_ins->get_num_operands() == 3){
