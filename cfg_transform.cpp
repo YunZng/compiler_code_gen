@@ -38,7 +38,7 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
     for(auto i = transformed_bb->cbegin(); i != transformed_bb->cend(); i++){
       HighLevelFormatter formatter;
       std::string formatted_ins = formatter.format_instruction(*i);
-      printf("\t%s\n", formatted_ins.c_str());
+      // printf("\t%s\n", formatted_ins.c_str());
     }
 
     // Create transformed basic block; note that we set its
