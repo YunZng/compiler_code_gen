@@ -202,6 +202,8 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
             delete new_ins;
             new_ins = nullptr;
           }
+        } else if(first.is_memref()){
+          new_ins->set_operand(val_to_ival[first.get_base_reg()].to_memref(), 0);
         }
       }
     } else if(HighLevel::is_def(orig_ins)){
@@ -262,12 +264,12 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
     if(new_ins){
       result_iseq->append(new_ins);
       std::string formatted_ins = formatter.format_instruction(new_ins);
-      // printf("\t%s\n", formatted_ins.c_str());
+      printf("\t%s\n", formatted_ins.c_str());
       new_ins = nullptr;
     }
 
   }
-  // puts("");
+  puts("");
 
   return result_iseq;
 }
