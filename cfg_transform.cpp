@@ -231,7 +231,7 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
     } else if(orig_ins->get_opcode() == HINS_localaddr){
       first = orig_ins->get_operand(0);
       second = orig_ins->get_operand(1);
-
+      val_to_ival.erase(first.get_base_reg());
     } else if(orig_ins->get_opcode() >= HINS_sconv_bw && orig_ins->get_opcode() <= HINS_sconv_lq){
       first = orig_ins->get_operand(0);
       second = orig_ins->get_operand(1);
