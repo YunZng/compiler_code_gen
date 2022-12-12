@@ -171,7 +171,7 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
   //hash the instruction
   // std::unordered_map<Instruction, Operand, MyHashFunction> val_map;
   // bool ignore_sconv = false;
-
+  val_to_ival.clear();
   LiveVregs::FactType live_after = m_live_vregs.get_fact_at_end_of_block(orig);
   for(auto i = orig_bb->cbegin(); i != orig_bb->cend(); ++i){
     Instruction* orig_ins = *i;
@@ -202,7 +202,7 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
         }
       }
     } else if(HighLevel::is_def(orig_ins)){
-
+      int dest_reg = orig_ins->get_operand(0).get_base_reg();
       int foldable = 0;
       for(int i = 1; i < orig_ins->get_num_operands(); i++){
         second = orig_ins->get_operand(i);
@@ -217,11 +217,11 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
           new_ins->set_operand(second, i);
         }
       }
+
       val_to_ival.erase(orig_ins->get_operand(0).get_base_reg());
       // if all operands are constants for 2 operand operations, constant fold
       opcode = is_basic_operation(opcode);
       if(foldable == 2 && opcode){
-        Operand dest = orig_ins->get_operand(0);
         first = new_ins->get_operand(1);
         second = new_ins->get_operand(2);
         assert(first.is_imm_ival() && second.is_imm_ival());
@@ -236,7 +236,7 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
         } else if(opcode == HINS_mul_b){
           first_ival = first_ival * second_ival;
         }
-        val_to_ival[dest.get_base_reg()] = Operand(Operand::IMM_IVAL, first_ival);
+        val_to_ival[dest_reg] = Operand(Operand::IMM_IVAL, first_ival);
         delete new_ins;
         new_ins = nullptr;
       }
