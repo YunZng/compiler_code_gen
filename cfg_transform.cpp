@@ -119,13 +119,14 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
   val_to_ival.clear();
   Instruction* prev1 = nullptr, * prev2 = nullptr;
   LiveVregs::FactType live_after = m_live_vregs.get_fact_at_end_of_block(orig);
+  HighLevelFormatter formatter;
+
   for(auto i = orig_bb->cbegin(); i != orig_bb->cend(); ++i){
     Instruction* orig_ins = *i;
     Instruction* new_ins = orig_ins->duplicate();
     Operand first, second;
     HighLevelOpcode opcode = (HighLevelOpcode)orig_ins->get_opcode();
 
-    HighLevelFormatter formatter;
     std::string formatted_ins = formatter.format_instruction(new_ins);
     // printf("\t%s\n", formatted_ins.c_str());
 
@@ -145,6 +146,12 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
               delete new_ins;
               new_ins = nullptr;
             }
+          }
+        } else if(second.is_memref()){
+          second = Operand(Operand::VREG, second.get_base_reg());
+          recursive_find(second);
+          if(orig_ins->get_operand(1).is_memref()){
+            new_ins->set_operand(second.to_memref(), 1);
           }
         }
         // cannot ignore argument assignment
@@ -239,15 +246,18 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
 
     if(new_ins){
       result_iseq->append(new_ins);
-      std::string formatted_ins = formatter.format_instruction(new_ins);
-      // printf("\t%s\n", formatted_ins.c_str());
       new_ins = nullptr;
     }
     prev2 = prev1;
     prev1 = orig_ins;
 
   }
-  // puts("");
+
+  for(auto i = result_iseq->cbegin(); i != result_iseq->cend(); i++){
+    std::string formatted_ins = formatter.format_instruction(*i);
+    // printf("\t%s\n", formatted_ins.c_str());
+  }
+  puts("");
 
   return result_iseq;
 }
