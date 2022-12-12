@@ -43,6 +43,8 @@ private:
 
 public:
   long use_cnt;
+  Kind kind;
+  int b_reg;
   Operand(Kind kind = NONE);
 
   // ival1 is either basereg or imm_ival (depending on operand Kind)

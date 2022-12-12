@@ -221,6 +221,7 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
   std::shared_ptr<InstructionSequence> result_iseq(new InstructionSequence());
   // register maps to virtual register(holder)
   std::multimap<Operand*, int, myComp> registers;
+  std::map<int, Operand> local_reg;
   for(int i = 12; i < 16; i++){
     Operand* reg = new Operand((Operand::Kind)4, (MachineReg)i);
     registers.emplace(reg, 0);
@@ -233,16 +234,26 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
 
     for(int i = 0; i < new_ins->get_num_operands(); i++){
       Operand op = new_ins->get_operand(i);
-      if(op.has_base_reg() && !live_after.test(op.get_base_reg()) && opcode > 0 && opcode <= 88 && op.get_base_reg() > 9){
-        auto first_pair = *min_element(registers.begin(), registers.end(), &myComp2);
+      if(op.has_base_reg() && !live_after.test(op.get_base_reg()) && op.get_base_reg() > 9){
         //unoccupied
-        if(first_pair.second == 0 || first_pair.second == op.get_base_reg()){
-          int size = highlevel_opcode_get_source_operand_size(opcode);
-          Operand reg(select_mreg_kind(size), first_pair.first->get_base_reg());
-          new_ins->set_operand(reg, i);
-          first_pair.first->use_cnt += 1;
-        } else{
-
+        for(auto& p : registers){
+          // printf("p.second %d\nbasereg %d\n", p.second.get_base_reg(), op.get_base_reg());
+          if(p.second == op.get_base_reg()){
+            Operand reg = local_reg[op.get_base_reg()];
+            new_ins->set_operand(reg, i);
+            p.first->use_cnt += 1;
+            break;
+          } else if(p.second == 0 && opcode > 0 && opcode <= 88){
+            int size = highlevel_opcode_get_source_operand_size(opcode);
+            auto kind = select_mreg_kind(size);
+            auto b_reg = p.first->get_base_reg();
+            Operand reg = Operand(kind, b_reg);
+            new_ins->set_operand(reg, i);
+            p.first->use_cnt += 1;
+            p.second = op.get_base_reg();
+            local_reg[op.get_base_reg()] = reg;
+            break;
+          }
         }
       }
     }

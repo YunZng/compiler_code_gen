@@ -59,7 +59,6 @@ namespace{
   }
 
 }
-
 Operand::Operand(Kind kind)
   : m_kind(kind)
   , m_basereg(-1)
