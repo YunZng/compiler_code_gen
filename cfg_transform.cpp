@@ -180,25 +180,28 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
     HighLevelOpcode opcode = (HighLevelOpcode)orig_ins->get_opcode();
 
     HighLevelFormatter formatter;
-    // puts("beginning");
     std::string formatted_ins = formatter.format_instruction(new_ins);
     // printf("\t%s\n", formatted_ins.c_str());
 
-    // can ignore moving constant to register, but not memory
+    // can ignore moving constant or register to register, but not memory
     if(match_hl(HINS_mov_b, opcode)){
       first = orig_ins->get_operand(0);
       second = orig_ins->get_operand(1);
-      if(first.is_reg() && (second.is_reg() || second.is_imm_ival())){
+      if(second.is_reg() || second.is_imm_ival()){
         recursive_find(second);
-        val_to_ival[first.get_base_reg()] = second;
         new_ins->set_operand(second, 1);
-        if(first.get_base_reg() > 9 && !live_after.test(first.get_base_reg())){
-          delete new_ins;
-          new_ins = nullptr;
-        }
-        if(second.is_reg() && first.get_base_reg() == second.get_base_reg()){
-          delete new_ins;
-          new_ins = nullptr;
+        if(first.is_reg()){
+          val_to_ival[first.get_base_reg()] = second;
+          // cannot ignore argument assignment
+          if(first.get_base_reg() > 9 && !live_after.test(first.get_base_reg())){
+            delete new_ins;
+            new_ins = nullptr;
+          }
+          // can ignore if both registers are the same
+          if(second.is_reg() && first.get_base_reg() == second.get_base_reg()){
+            delete new_ins;
+            new_ins = nullptr;
+          }
         }
       }
     } else if(HighLevel::is_def(orig_ins)){
@@ -209,7 +212,7 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
         if(second.is_imm_ival()){
           foldable++;
         }
-        if(second.is_reg() && !m_live_vregs.get_fact_after_instruction(orig, orig_ins).test(second.get_base_reg())){
+        if(second.is_reg() && !m_live_vregs.get_fact_at_end_of_block(orig).test(second.get_base_reg())){
           recursive_find(second);
           if(second.is_imm_ival()){
             foldable++;
