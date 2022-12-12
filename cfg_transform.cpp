@@ -5,6 +5,7 @@
 #include "highlevel.h"
 #include <unordered_map>
 #include "highlevel_formatter.h"
+#include "highlevel_codegen.h"
 #include "lowlevel_codegen.h"
 
 ControlFlowGraphTransform::ControlFlowGraphTransform(const std::shared_ptr<ControlFlowGraph>& cfg)
@@ -107,63 +108,7 @@ public:
   }
 };
 
-/*
-std::shared_ptr<InstructionSequence>
-MyOptimization::constant_fold(const InstructionSequence* orig_bb){
-  const BasicBlock* orig_bb_as_basic_block = static_cast<const BasicBlock*>(orig_bb);
 
-  std::shared_ptr<InstructionSequence> result_iseq(new InstructionSequence());
-  std::unordered_map<int, long> vregVal;
-  // idea: unless assigned new value, replace reference to that vreg with the constant val
-  for(auto i = orig_bb->cbegin(); i != orig_bb->cend(); ++i){
-    Instruction* orig_ins = *i;
-    Instruction* new_ins = orig_ins->duplicate();
-
-    HighLevelFormatter formatter;
-    // puts("beginning");
-    std::string formatted_ins = formatter.format_instruction(new_ins);
-    // printf("\t%s\n", formatted_ins.c_str());
-
-    // if destination is changed, need to update
-    if(orig_ins->get_opcode() == HINS_localaddr){
-      Operand dest = orig_ins->get_operand(0);
-      int dest_vreg = dest.get_base_reg();
-      if(vregVal.find(dest_vreg) != vregVal.end()){
-        vregVal.erase(dest_vreg);
-      }
-    } else if(HighLevel::is_def(orig_ins)){
-      loop_check(1, new_ins, orig_ins, vregVal);
-
-      Operand dest = orig_ins->get_operand(0);
-      int dest_vreg = dest.get_base_reg();
-      if(vregVal.find(dest_vreg) != vregVal.end()){
-        vregVal.erase(dest_vreg);
-      }
-      if(orig_ins->get_num_operands() == 2 && orig_ins->get_operand(1).is_imm_ival()){
-        vregVal[dest_vreg] = orig_ins->get_operand(1).get_imm_ival();
-        delete new_ins;
-        new_ins = nullptr;
-      }
-      // else{
-      //   printf("has %d\n", vregVal.find(11) != vregVal.end());
-
-      // }
-    } else{
-      loop_check(0, new_ins, orig_ins, vregVal);
-    }
-    if(new_ins){
-      result_iseq->append(new_ins);
-      std::string formatted_ins = formatter.format_instruction(new_ins);
-      // printf("\t%s\n", formatted_ins.c_str());
-      new_ins = nullptr;
-    }
-
-  }
-
-  // return std::shared_ptr<InstructionSequence>(orig_bb->duplicate());
-  return result_iseq;
-}
-*/
 static long val = 0;
 std::shared_ptr<InstructionSequence>
 MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
@@ -172,6 +117,7 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
   // std::unordered_map<Instruction, Operand, MyHashFunction> val_map;
   // bool ignore_sconv = false;
   val_to_ival.clear();
+  Instruction* prev1 = nullptr, * prev2 = nullptr;
   LiveVregs::FactType live_after = m_live_vregs.get_fact_at_end_of_block(orig);
   for(auto i = orig_bb->cbegin(); i != orig_bb->cend(); ++i){
     Instruction* orig_ins = *i;
@@ -237,7 +183,22 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
           new_ins->set_operand(second, i);
         }
       }
+      if(orig_ins->get_num_operands() == 3){
+        first = orig_ins->get_operand(1);
+        second = orig_ins->get_operand(2);
+        if(first.is_reg() && second.is_reg()){
+          int a = first.get_base_reg();
+          int b = second.get_base_reg();
+          if(val_to_ival.find(a) != val_to_ival.end() && val_to_ival[a].is_memref()
+            && val_to_ival.find(b) != val_to_ival.end() && val_to_ival[b].is_memref()){
+            prev2 = prev2->duplicate();
+            result_iseq->append(prev2);
 
+            prev1 = prev1->duplicate();
+            result_iseq->append(prev1);
+          }
+        }
+      }
       val_to_ival.erase(orig_ins->get_operand(0).get_base_reg());
       // if all operands are constants for 2 operand operations, constant fold
       opcode = is_basic_operation(opcode);
@@ -282,6 +243,8 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
       // printf("\t%s\n", formatted_ins.c_str());
       new_ins = nullptr;
     }
+    prev2 = prev1;
+    prev1 = orig_ins;
 
   }
   // puts("");
@@ -334,11 +297,11 @@ long MyOptimization::set_val(std::map<long, long>& m, Operand o){
   return val++;
 }
 void MyOptimization::recursive_find(Operand& o){
-  if(o.is_imm_ival() || o.get_base_reg() < 10 || val_to_ival.find(o.get_base_reg()) == val_to_ival.end()){
+  if(o.is_imm_ival() || o.is_memref() || o.get_base_reg() < 10 || val_to_ival.find(o.get_base_reg()) == val_to_ival.end()){
     return;
   }
   Operand key = val_to_ival[o.get_base_reg()];
-  if(key.has_base_reg() && o.get_base_reg() == key.get_base_reg()){
+  if((key.has_base_reg() && o.get_base_reg() == key.get_base_reg()) || key.is_memref()){
     return;
   }
   o = key;

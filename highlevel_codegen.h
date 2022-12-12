@@ -3,6 +3,7 @@
 #include "highlevel.h"
 #include "instruction_seq.h"
 #include "ast_visitor.h"
+#include "type.h"
 
 // A HighLevelCodegen visitor generates high-level IR code for
 // a single function. Code generation is initiated by visiting
@@ -52,3 +53,5 @@ private:
   bool are_same(std::shared_ptr<Type> type1, std::shared_ptr<Type> type2);
   bool is_convertible(std::shared_ptr<Type> l, std::shared_ptr<Type> r);
 };
+
+HighLevelOpcode get_opcode(HighLevelOpcode base_opcode, const std::shared_ptr<Type>& type);

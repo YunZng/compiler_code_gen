@@ -1,14 +1,12 @@
+struct Point{
+  int x, y;
+};
+
 int main(void){
-  int n, i, sum;
+  struct Point p;
 
-  n = 11;
-  i = 1;
-  sum = 0;
+  p.x = 2;
+  p.y = 3;
 
-  while(i <= n){
-    sum = sum + i;
-    i = i + 1;
-  }
-
-  return sum;
+  return p.x + p.y;
 }

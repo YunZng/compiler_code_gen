@@ -9,20 +9,18 @@
 #include "highlevel_codegen.h"
 #include <algorithm>
 
-namespace{
 
-  // Adjust an opcode for a basic type
-  HighLevelOpcode get_opcode(HighLevelOpcode base_opcode, const std::shared_ptr<Type>& type){
-    if(type->is_basic()){
-      return static_cast<HighLevelOpcode>(int(base_opcode) + int(type->get_basic_type_kind()));
-    } else if(type->is_pointer()){
-      return static_cast<HighLevelOpcode>(int(base_opcode) + int(BasicTypeKind::LONG));
-    } else{
-      RuntimeError::raise("attempt to use type '%s' as data in opcode selection", type->as_str().c_str());
-    }
+// Adjust an opcode for a basic type
+HighLevelOpcode get_opcode(HighLevelOpcode base_opcode, const std::shared_ptr<Type>& type){
+  if(type->is_basic()){
+    return static_cast<HighLevelOpcode>(int(base_opcode) + int(type->get_basic_type_kind()));
+  } else if(type->is_pointer()){
+    return static_cast<HighLevelOpcode>(int(base_opcode) + int(BasicTypeKind::LONG));
+  } else{
+    RuntimeError::raise("attempt to use type '%s' as data in opcode selection", type->as_str().c_str());
   }
-
 }
+
 
 HighLevelCodegen::HighLevelCodegen(int next_label_num)
   : m_next_label_num(next_label_num)
