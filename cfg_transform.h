@@ -57,5 +57,6 @@ private:
   long set_val(std::map<long, long>&, Operand);
   void recursive_find(Operand&);
   HighLevelOpcode is_basic_operation(HighLevelOpcode);
+  void erase_depend(Operand);
 };
 #endif // CFG_TRANSFORM_H

@@ -195,7 +195,7 @@ void HighLevelCodegen::visit_binary_expression(Node* n){
         second = Operand(Operand::VREG, n->get_kid(2)->get_vreg());
       }
       m_hl_iseq->append(new Instruction(get_opcode(HINS_mov_b, type1), first, second));
-      curVreg = imVreg;
+      // curVreg = imVreg;
       return;
     }
     case TOK_PLUS:{
@@ -302,7 +302,7 @@ void HighLevelCodegen::visit_unary_expression(Node* n){
       break;
     }
   }
-  // curVreg = imVreg;
+  curVreg = imVreg;
   n->set_op(dest);
 }
 

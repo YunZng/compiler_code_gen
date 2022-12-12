@@ -4,6 +4,7 @@
 #include "highlevel_defuse.h"
 #include "highlevel.h"
 #include <unordered_map>
+#include <set>
 #include "highlevel_formatter.h"
 #include "highlevel_codegen.h"
 #include "lowlevel_codegen.h"
@@ -74,37 +75,31 @@ MyOptimization::MyOptimization(const std::shared_ptr<ControlFlowGraph>& cfg)
 MyOptimization::~MyOptimization(){
 }
 
-class MyHashFunction{
-public:
-  size_t operator()(const Instruction& i) const{
-    auto result = std::hash<int>()(i.get_opcode());
-    Operand first = i.get_operand(1);
-    Operand second = i.get_operand(2);
-    if(first.is_reg()){
-      result += std::hash<int>()(first.get_base_reg());
+struct myCompare{
+  bool operator()(const Instruction* a, const Instruction* b) const{
+    int a_op_cnt = a->get_num_operands();
+    if(a_op_cnt != b->get_num_operands()){
+      return true;
     }
-    if(second.is_reg()){
-      result += std::hash<int>()(second.get_base_reg());
+    if(a->get_opcode() != b->get_opcode()){
+      return true;
     }
-    if(first.is_imm_ival()){
-      unsigned long temp = std::hash<int>()(first.get_imm_ival());
-      result += std::hash<unsigned long>()(temp);
+    for(int i = 0; i < a_op_cnt; i++){
+      Operand opa = a->get_operand(i);
+      Operand opb = b->get_operand(i);
+      if(opa.is_imm_ival() && opb.is_imm_ival() && opa.get_imm_ival() == opb.get_imm_ival()){
+      } else if(opa.has_base_reg() && opb.has_base_reg() && opa.get_base_reg() == opb.get_base_reg()){
+        if(opa.is_memref() && opb.is_memref()){
+
+        } else if(opa.is_reg() && opb.is_reg()){
+
+        } else{
+          return true;
+        }
+
+      } else{ return true; }
     }
-    if(second.is_imm_ival()){
-      unsigned long temp = std::hash<int>()(second.get_imm_ival());
-      result += std::hash<unsigned long>()(temp);
-    }
-    if(first.is_memref()){
-      unsigned long temp = std::hash<int>()(first.get_base_reg());
-      temp = std::hash<unsigned long>()(temp);
-      result += std::hash<unsigned long>()(temp);
-    }
-    if(first.is_memref()){
-      unsigned long temp = std::hash<int>()(second.get_base_reg());
-      temp = std::hash<unsigned long>()(temp);
-      result += std::hash<unsigned long>()(temp);
-    }
-    return result;
+    return false;
   }
 };
 
@@ -113,9 +108,7 @@ static long val = 0;
 std::shared_ptr<InstructionSequence>
 MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
   std::shared_ptr<InstructionSequence> result_iseq(new InstructionSequence());
-  //hash the instruction
-  // std::unordered_map<Instruction, Operand, MyHashFunction> val_map;
-  // bool ignore_sconv = false;
+  std::set<Instruction*, myCompare> ins_dup;
   val_to_ival.clear();
   Instruction* prev1 = nullptr, * prev2 = nullptr;
   LiveVregs::FactType live_after = m_live_vregs.get_fact_at_end_of_block(orig);
@@ -124,6 +117,11 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
   for(auto i = orig_bb->cbegin(); i != orig_bb->cend(); ++i){
     Instruction* orig_ins = *i;
     Instruction* new_ins = orig_ins->duplicate();
+    int original_size = ins_dup.size();
+    ins_dup.insert(orig_ins);
+    if(original_size == ins_dup.size()){
+      continue;
+    }
     Operand first, second;
     HighLevelOpcode opcode = (HighLevelOpcode)orig_ins->get_opcode();
 
@@ -156,6 +154,7 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
         }
         // cannot ignore argument assignment
         else if(first.get_base_reg() > 9 && !live_after.test(first.get_base_reg())){
+          erase_depend(first);
           delete new_ins;
           new_ins = nullptr;
         }
@@ -182,7 +181,7 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
         if(second.is_imm_ival()){
           foldable++;
         }
-        if(second.is_reg() && !m_live_vregs.get_fact_at_end_of_block(orig).test(second.get_base_reg())){
+        if(second.is_reg() && !m_live_vregs.get_fact_after_instruction(orig, orig_ins).test(second.get_base_reg())){
           recursive_find(second);
           if(second.is_imm_ival()){
             foldable++;
@@ -255,7 +254,7 @@ MyOptimization::lvn(const InstructionSequence* orig_bb, const BasicBlock* orig){
 
   for(auto i = result_iseq->cbegin(); i != result_iseq->cend(); i++){
     std::string formatted_ins = formatter.format_instruction(*i);
-    // printf("\t%s\n", formatted_ins.c_str());
+    printf("\t%s\n", formatted_ins.c_str());
   }
   puts("");
 
@@ -328,5 +327,16 @@ HighLevelOpcode MyOptimization::is_basic_operation(HighLevelOpcode opcode){
     return HINS_div_b;
   } else{
     return HINS_nop;
+  }
+}
+void MyOptimization::erase_depend(Operand a){
+  std::vector<long> dead;
+  for(auto i : val_to_ival){
+    if(i.second.has_base_reg() && i.second.get_base_reg() == a.get_base_reg()){
+      dead.push_back(i.first);
+    }
+  }
+  for(auto i : dead){
+    val_to_ival.erase(i);
   }
 }

@@ -1,6 +1,7 @@
 int main(void){
-  int a, * p;
+  int a, * p, ** pp;
   p = &a;
-  *p = 42;
-  return a; // should return 42
+  pp = &p;
+  **pp = 17;
+  return a;
 }
