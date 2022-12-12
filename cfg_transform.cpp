@@ -240,10 +240,13 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
       if(op.has_base_reg() && !live_after.test(op.get_base_reg()) && !live_before.test(op.get_base_reg()) && op.get_base_reg() > 9){
         //unoccupied
         for(auto& p : registers){
-          // printf("p.second %d\nbasereg %d\n", p.second.get_base_reg(), op.get_base_reg());
           if(p.second == op.get_base_reg()){
             Operand reg = local_reg[op.get_base_reg()];
-            new_ins->set_operand(reg, i);
+            if(new_ins->get_operand(i).is_memref()){
+              new_ins->set_operand(reg.to_memref(), i);
+            } else{
+              new_ins->set_operand(reg, i);
+            }
             p.first->use_cnt += 1;
             break;
           } else if(p.second == 0 && opcode > 0 && opcode <= 88){
@@ -251,7 +254,11 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
             auto kind = select_mreg_kind(size);
             auto b_reg = p.first->get_base_reg();
             Operand reg = Operand(kind, b_reg);
-            new_ins->set_operand(reg, i);
+            if(new_ins->get_operand(i).is_memref()){
+              new_ins->set_operand(reg.to_memref(), i);
+            } else{
+              new_ins->set_operand(reg, i);
+            }
             p.first->use_cnt += 1;
             p.second = op.get_base_reg();
             local_reg[op.get_base_reg()] = reg;
