@@ -17,6 +17,10 @@ namespace{
     HINS_leave,
     HINS_cjmp_t,
     HINS_cjmp_f,
+    HINS_neg_b,
+    HINS_neg_l,
+    HINS_neg_q,
+    HINS_neg_w
   };
 
   // Does the instruction have a destination operand?
