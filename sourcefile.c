@@ -1,12 +1,13 @@
-// test for an integer promotion
-
-void print_i32(int n);
+void print_i64(long n);
 void print_nl(void);
 
 int main(void){
-  char c;
-  c = -67;
-  print_i32(c);
+  long a, b, c;
+  a = 14642L;
+  a = a * 341491L;
+  b = 29L;
+  c = a * b;
+  print_i64(c);
   print_nl();
   return 0;
 }

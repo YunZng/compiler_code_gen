@@ -38,7 +38,7 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
     for(auto i = transformed_bb->cbegin(); i != transformed_bb->cend(); i++){
       HighLevelFormatter formatter;
       std::string formatted_ins = formatter.format_instruction(*i);
-      // printf("\t%s\n", formatted_ins.c_str());
+      printf("\t%s\n", formatted_ins.c_str());
     }
 
     // Create transformed basic block; note that we set its
@@ -110,6 +110,8 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb, BasicBlock* or
         if(vregVal.find(first.get_base_reg()) != vregVal.end() && !m_live_vregs.get_fact_after_instruction(orig, orig_ins).test(first.get_base_reg())){
           Operand new_op(Operand::IMM_IVAL, vregVal[first.get_base_reg()]);
           new_ins->set_operand(new_op, 1);
+        } else{
+          vregVal.erase(dest_vreg);
         }
       }
       if(first.is_imm_ival() && !dest.is_memref() && dest.get_base_reg() > 9 && !m_live_vregs.get_fact_at_end_of_block(orig).test(dest.get_base_reg())){
@@ -146,8 +148,8 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb, BasicBlock* or
         }
         if(first.is_imm_ival() && second.is_imm_ival()){
           HighLevelOpcode opcode = (HighLevelOpcode)orig_ins->get_opcode();
-          int first_ival = first.get_imm_ival();
-          int second_ival = second.get_imm_ival();
+          long long first_ival = first.get_imm_ival();
+          long long second_ival = second.get_imm_ival();
           if(match_hl(HINS_add_b, opcode)){
             first_ival = first_ival + second_ival;
             vregVal[dest.get_base_reg()] = first_ival;

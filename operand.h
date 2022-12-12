@@ -38,7 +38,7 @@ public:
 private:
   Kind m_kind;
   int m_basereg, m_index_reg;
-  long m_imm_ival;
+  long long m_imm_ival;
   std::string m_label;
 
 public:
