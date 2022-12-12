@@ -43,6 +43,7 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
       std::string formatted_ins = formatter.format_instruction(*i);
       // printf("\t%s\n", formatted_ins.c_str());
     }
+    // puts("");
 
     // Create transformed basic block; note that we set its
     // code order to be the same as the code order of the original
@@ -227,6 +228,8 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
     registers.emplace(reg, 0);
   }
   LiveVregs::FactType live_after = m_live_vregs.get_fact_at_end_of_block(orig);
+  LiveVregs::FactType live_before = m_live_vregs.get_fact_at_beginning_of_block(orig);
+
   for(auto j = orig_bb->cbegin(); j != orig_bb->cend(); ++j){
     Instruction* orig_ins = *j;
     Instruction* new_ins = orig_ins->duplicate();
@@ -234,7 +237,7 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
 
     for(int i = 0; i < new_ins->get_num_operands(); i++){
       Operand op = new_ins->get_operand(i);
-      if(op.has_base_reg() && !live_after.test(op.get_base_reg()) && op.get_base_reg() > 9){
+      if(op.has_base_reg() && !live_after.test(op.get_base_reg()) && !live_before.test(op.get_base_reg()) && op.get_base_reg() > 9){
         //unoccupied
         for(auto& p : registers){
           // printf("p.second %d\nbasereg %d\n", p.second.get_base_reg(), op.get_base_reg());
