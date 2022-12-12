@@ -298,10 +298,7 @@ void HighLevelCodegen::visit_unary_expression(Node* n){
       break;
     }
     case TOK_AMPERSAND:{
-      // dest = next_vr();
-      // addr = var->get_symbol()->get_addr();
-      // first = Operand(Operand::IMM_IVAL, addr);
-      // m_hl_iseq->append(new Instruction(HINS_localaddr, dest, first));
+      dest = Operand(Operand::VREG, curVreg - 1);
       break;
     }
   }
