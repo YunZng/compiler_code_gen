@@ -223,7 +223,7 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
   // register maps to virtual register(holder)
   std::multimap<Operand*, int, myComp> registers;
   std::map<int, Operand> local_reg;
-  for(int i = 12; i < 16; i++){
+  for(int i = 0; i < 16; i++){
     Operand* reg = new Operand((Operand::Kind)4, (MachineReg)i);
     registers.emplace(reg, 0);
   }
