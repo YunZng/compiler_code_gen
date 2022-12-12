@@ -31,7 +31,7 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
 
     // Transform the instructions
     std::shared_ptr<InstructionSequence> transformed_bb = dead_store(orig);
-    for(auto i = 0; i < 4; i++){
+    for(auto i = 0; i < 1; i++){
       transformed_bb = constant_fold(transformed_bb.get(), orig);
     }
     for(auto i = transformed_bb->cbegin(); i != transformed_bb->cend(); i++){
@@ -113,7 +113,6 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb, BasicBlock* or
         }
       }
       if(orig_ins->get_num_operands() == 2){
-
         if(first.is_imm_ival()){
           vregVal[dest_vreg] = first.get_imm_ival();
           delete new_ins;
@@ -128,7 +127,7 @@ MyOptimization::constant_fold(const InstructionSequence* orig_bb, BasicBlock* or
         if(second.is_reg()){
           if(vregVal.find(second.get_base_reg()) != vregVal.end() && !m_live_vregs.get_fact_after_instruction(orig, orig_ins).test(second.get_base_reg())){
             Operand new_op(Operand::IMM_IVAL, vregVal[second.get_base_reg()]);
-            new_ins->set_operand(new_op, 1);
+            new_ins->set_operand(new_op, 2);
           }
         }
         if(first.is_imm_ival() && second.is_imm_ival()){
