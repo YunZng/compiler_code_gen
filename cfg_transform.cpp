@@ -278,6 +278,7 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb){
 
 std::shared_ptr<InstructionSequence>
 MyOptimization::copy_prop(const InstructionSequence* orig_bb, BasicBlock* orig){
+  // puts("cp")
   const BasicBlock* bb_orig = static_cast<const BasicBlock*>(orig_bb);
   std::shared_ptr<InstructionSequence> result_iseq(new InstructionSequence());
   std::unordered_map<int, Operand> op_map;

@@ -207,7 +207,7 @@ LowLevelOpcode select_ll_opcode(LowLevelOpcode base_opcode, int operand_size){
     case 8: // 'q' variant
       off = 3; break;
     default:
-      assert(false);
+      // assert(false);
       off = 3;
   }
 
@@ -292,7 +292,7 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
   }
 
   // double operand
-
+// printf("%d\n", hl_opcode);
   int size = highlevel_opcode_get_source_operand_size(hl_opcode);
   Operand first_operand = get_ll_operand(hl_ins->get_operand(0), size, ll_iseq);
   Operand zero(Operand::IMM_IVAL, 0);
@@ -366,7 +366,8 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
     Operand sec_r10(select_mreg_kind(sec), MREG_R10);
     ll_iseq->append(new Instruction(first_mov, sec_operand, first_r10));
     ll_iseq->append(new Instruction(dif + MINS_MOVSBW, first_r10, sec_r10));
-    ll_iseq->append(new Instruction(sec_mov, sec_r10, first_operand));
+    Operand first_op = get_ll_operand(hl_ins->get_operand(0), sec, ll_iseq);
+    ll_iseq->append(new Instruction(sec_mov, sec_r10, first_op));
     return;
   }
   if(match_hl(HINS_mov_b, hl_opcode)){
