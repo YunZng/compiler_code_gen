@@ -227,8 +227,8 @@ int highlevel_opcode_get_source_operand_size(HighLevelOpcode opcode){
     case HINS_enter: return 0;
     case HINS_leave: return 0;
     case HINS_localaddr: return 0;
-    case HINS_cjmp_t: return 4;
-    case HINS_cjmp_f: return 4;
+    case HINS_cjmp_t: return 1;
+    case HINS_cjmp_f: return 1;
     default: return 0;
   }
 }
@@ -342,8 +342,8 @@ int highlevel_opcode_get_dest_operand_size(HighLevelOpcode opcode){
     case HINS_enter: return 0;
     case HINS_leave: return 0;
     case HINS_localaddr: return 0;
-    case HINS_cjmp_t: return 4;
-    case HINS_cjmp_f: return 4;
+    case HINS_cjmp_t: return 1;
+    case HINS_cjmp_f: return 1;
     default: return 0;
   }
 }
