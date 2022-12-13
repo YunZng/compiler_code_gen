@@ -207,7 +207,7 @@ LowLevelOpcode select_ll_opcode(LowLevelOpcode base_opcode, int operand_size){
     case 8: // 'q' variant
       off = 3; break;
     default:
-      // assert(false);
+      assert(false);
       off = 3;
   }
 

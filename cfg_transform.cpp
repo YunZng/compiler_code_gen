@@ -289,12 +289,17 @@ MyOptimization::copy_prop(const InstructionSequence* orig_bb, BasicBlock* orig){
     int total_operand = orig_ins->get_num_operands();
     if(orig_ins->get_num_operands() > 0){
       Operand dest = orig_ins->get_operand(0);
-      if(dest.has_base_reg() && op_map.find(dest.get_base_reg()) != op_map.end() && m_live_vregs.get_fact_after_instruction(orig, orig_ins).test(dest.get_base_reg())){
-        Operand candidate = op_map[dest.get_base_reg()];
-        if(dest.is_memref()){
-          new_ins->set_operand(candidate.to_memref(), 0);
+
+      if(dest.has_base_reg() && op_map.find(dest.get_base_reg()) != op_map.end()){
+        if(!m_live_vregs.get_fact_after_instruction(orig, orig_ins).test(dest.get_base_reg())){
+          op_map.erase(dest.get_base_reg());
         } else{
-          new_ins->set_operand(candidate, 0);
+          Operand candidate = op_map[dest.get_base_reg()];
+          if(dest.is_memref()){
+            new_ins->set_operand(candidate.to_memref(), 0);
+          } else{
+            new_ins->set_operand(candidate, 0);
+          }
         }
       }
       for(int i = 1; i < total_operand; i++){
