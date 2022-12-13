@@ -40,11 +40,9 @@ private:
   int m_basereg, m_index_reg;
   long long m_imm_ival;
   std::string m_label;
+  int m_reg;
 
 public:
-  long use_cnt;
-  Kind kind;
-  int b_reg;
   Operand(Kind kind = NONE);
 
   // ival1 is either basereg or imm_ival (depending on operand Kind)
@@ -61,7 +59,8 @@ public:
   // use compiler-generated copy ctor and assignment op
 
   Kind get_kind() const;
-
+  void set_mreg(int);
+  int get_mreg()const;
   // Is the operand an immediate integer value?
   bool is_imm_ival() const;
 

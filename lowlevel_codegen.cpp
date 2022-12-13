@@ -98,22 +98,21 @@ std::shared_ptr<InstructionSequence> LowLevelCodeGen::generate(const std::shared
   std::shared_ptr<InstructionSequence> cur_hl_iseq(hl_iseq);
 
   if(m_optimize){
-    for(int i = 0; i < 1; i++){
-      // Create a control-flow graph representation of the high-level code
-      HighLevelControlFlowGraphBuilder hl_cfg_builder(cur_hl_iseq);
-      std::shared_ptr<ControlFlowGraph> cfg = hl_cfg_builder.build();
+    // Create a control-flow graph representation of the high-level code
+    HighLevelControlFlowGraphBuilder hl_cfg_builder(cur_hl_iseq);
+    std::shared_ptr<ControlFlowGraph> cfg = hl_cfg_builder.build();
 
-      // Do local optimizations
-      MyOptimization hl_opts(cfg);
-      cfg = hl_opts.transform_cfg();
+    // Do local optimizations
+    MyOptimization hl_opts(cfg);
+    hl_opts.get_ranking();
+    cfg = hl_opts.transform_cfg();
 
-      // Convert the transformed high-level CFG back to an InstructionSequence
-      cur_hl_iseq = cfg->create_instruction_sequence();
+    // Convert the transformed high-level CFG back to an InstructionSequence
+    cur_hl_iseq = cfg->create_instruction_sequence();
 
-      // The function definition AST might have information needed for
-      // low-level code generation
-      cur_hl_iseq->set_funcdef_ast(funcdef_ast);
-    }
+    // The function definition AST might have information needed for
+    // low-level code generation
+    cur_hl_iseq->set_funcdef_ast(funcdef_ast);
   }
 
   // Translate (possibly transformed) high-level code into low-level code
@@ -512,6 +511,9 @@ Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode, int size, const std::
       // base -= 10;
       base = highest - base;
       Operand op(Operand::MREG64_MEM_OFF, MREG_RBP, mem_addr - base * 8);
+      if(hl_opcode.get_mreg()){
+        return Operand(select_mreg_kind(size), hl_opcode.get_mreg());
+      }
       return op;
     } else if(base == 1){
       return Operand(select_mreg_kind(size), MREG_RDI);

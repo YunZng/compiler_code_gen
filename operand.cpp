@@ -64,7 +64,7 @@ Operand::Operand(Kind kind)
   , m_basereg(-1)
   , m_index_reg(-1)
   , m_imm_ival(-1)
-  , use_cnt(0){
+  , m_reg(0){
 }
 
 // ival1 is either basereg or imm_ival (depending on operand Kind)
@@ -179,4 +179,12 @@ Operand Operand::to_memref() const{
 std::string Operand::get_label() const{
   assert(m_kind == Operand::LABEL || m_kind == Operand::IMM_LABEL);
   return m_label;
+}
+
+
+void Operand::set_mreg(int a){
+  m_reg = a;
+}
+int Operand::get_mreg()const{
+  return m_reg;
 }

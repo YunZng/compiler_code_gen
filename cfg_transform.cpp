@@ -7,8 +7,7 @@
 #include "highlevel_formatter.h"
 #include "lowlevel_codegen.h"
 #include "lowlevel.h"
-
-
+#include <algorithm>
 
 ControlFlowGraphTransform::ControlFlowGraphTransform(const std::shared_ptr<ControlFlowGraph>& cfg)
   : m_cfg(cfg){
@@ -21,12 +20,32 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::get_orig_cfg(){
   return m_cfg;
 }
 
+void ControlFlowGraphTransform::get_ranking(){
+  std::map<int, int> vreg_ranking_map;
+  for(auto i = m_cfg->bb_begin(); i != m_cfg->bb_end(); i++){
+    auto bb = *i;
+    for(auto i_seq = bb->cbegin(); i_seq != bb->cend(); i_seq++){
+      auto ins = *i_seq;
+      for(auto j = 0; j < ins->get_num_operands(); j++){
+        Operand op = ins->get_operand(j);
+        if(op.has_base_reg() && op.get_base_reg() > 9){
+          vreg_ranking_map[op.get_base_reg()]++;
+        }
+      }
+    }
+  }
+  for(auto& i : vreg_ranking_map){
+    vreg_ranking.push_back(i);
+  }
+  std::sort(vreg_ranking.begin(), vreg_ranking.end(), [](const std::pair<int, int>& l, const std::pair<int, int>& r){
+    return l.second < r.second;
+    });
+}
 std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
   std::shared_ptr<ControlFlowGraph> result(new ControlFlowGraph());
 
   // map of basic blocks of original CFG to basic blocks in transformed CFG
   std::map<BasicBlock*, BasicBlock*> block_map;
-
   // iterate over all basic blocks, transforming each one
   for(auto i = m_cfg->bb_begin(); i != m_cfg->bb_end(); i++){
     BasicBlock* orig = *i;
@@ -34,17 +53,18 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
     // Transform the instructions
     std::shared_ptr<InstructionSequence> transformed_bb = dead_store(orig);
     //10 iterations of constant propagation and constant folding
-    for(auto i = 0; i < 10; i++){
+    for(auto i = 0; i < 5; i++){
       transformed_bb = constant_fold(transformed_bb.get(), orig);
     }
     // transformed_bb = reg_alloc(transformed_bb.get(), orig);
-    for(auto i = 0; i < 10; i++){
+    for(auto i = 0; i < 5; i++){
       transformed_bb = copy_prop(transformed_bb.get(), orig);
     }
-
+    reg_alloc(transformed_bb.get());
     for(auto i = transformed_bb->cbegin(); i != transformed_bb->cend(); i++){
+      auto ins = *i;
       HighLevelFormatter formatter;
-      std::string formatted_ins = formatter.format_instruction(*i);
+      std::string formatted_ins = formatter.format_instruction(ins);
       // printf("\t%s\n", formatted_ins.c_str());
     }
     // puts("");
@@ -213,67 +233,35 @@ MyOptimization::dead_store(const InstructionSequence* orig_bb){
   return result_iseq;
 }
 
-struct myComp{
-  bool operator()(const Operand* a, const Operand* b)const{
-    return a->use_cnt < b->use_cnt;
-  }
-};
-bool myComp2(std::pair<Operand*, int> a, std::pair<Operand*, int> b){
-  return a.first->use_cnt < b.first->use_cnt;
-}
-std::shared_ptr<InstructionSequence>
+void
 MyOptimization::reg_alloc(const InstructionSequence* orig_bb){
-  std::shared_ptr<InstructionSequence> result_iseq(new InstructionSequence());
   const BasicBlock* orig = static_cast<const BasicBlock*>(orig_bb);
-  // register maps to virtual register(holder)
-  std::multimap<Operand*, int, myComp> registers;
-  std::map<int, Operand> local_reg;
+  // occupant - callee register
+  std::multimap<int, int> registers;
   for(int i = 12; i < 16; i++){
-    Operand* reg = new Operand((Operand::Kind)4, (MachineReg)i);
-    registers.emplace(reg, 0);
+    int vreg;
+    if(vreg_ranking.empty()){
+      vreg = 0;
+    } else{
+      vreg = vreg_ranking.back().first;
+      vreg_ranking.pop_back();
+    }
+    registers.emplace(vreg, i);
   }
-  LiveVregs::FactType live_after = m_live_vregs.get_fact_at_end_of_block(orig);
-  LiveVregs::FactType live_before = m_live_vregs.get_fact_at_beginning_of_block(orig);
 
   for(auto j = orig_bb->cbegin(); j != orig_bb->cend(); ++j){
     Instruction* orig_ins = *j;
-    Instruction* new_ins = orig_ins->duplicate();
+    // Instruction* new_ins = orig_ins->duplicate();
     HighLevelOpcode opcode = (HighLevelOpcode)orig_ins->get_opcode();
 
-    for(int i = 0; i < new_ins->get_num_operands(); i++){
-      Operand op = new_ins->get_operand(i);
-      if(op.has_base_reg() && !live_after.test(op.get_base_reg()) && !live_before.test(op.get_base_reg()) && op.get_base_reg() > 9){
-        //unoccupied
-        for(auto& p : registers){
-          if(p.second == op.get_base_reg()){
-            Operand reg = local_reg[op.get_base_reg()];
-            new_ins->set_operand(reg, i);
-            p.first->use_cnt += 1;
-            break;
-          } else if(p.second == 0 && opcode > 0 && opcode <= 88){
-            int size = highlevel_opcode_get_source_operand_size(opcode);
-            auto kind = select_mreg_kind(size);
-            auto b_reg = p.first->get_base_reg();
-            Operand reg = Operand(kind, b_reg);
-            new_ins->set_operand(reg, i);
-            p.first->use_cnt += 1;
-            p.second = op.get_base_reg();
-            local_reg[op.get_base_reg()] = reg;
-            break;
-          }
-        }
+    for(int i = 0; i < orig_ins->get_num_operands(); i++){
+      Operand op = orig_ins->get_operand(i);
+      if(op.has_base_reg() && registers.find(op.get_base_reg()) != registers.end()){
+        op.set_mreg(registers.find(op.get_base_reg())->second);
+        orig_ins->set_operand(op, i);
       }
     }
-
-    if(new_ins){
-      result_iseq->append(new_ins);
-      HighLevelFormatter formatter;
-      std::string formatted_ins = formatter.format_instruction(new_ins);
-      // printf("\t%s\n", formatted_ins.c_str());
-      new_ins = nullptr;
-    }
   }
-  return result_iseq;
 }
 
 std::shared_ptr<InstructionSequence>
