@@ -278,8 +278,8 @@ MyOptimization::copy_prop(const InstructionSequence* orig_bb, BasicBlock* orig){
   std::shared_ptr<InstructionSequence> result_iseq(new InstructionSequence());
   std::unordered_map<int, Operand> op_map;
   LiveVregs::FactType live_after = m_live_vregs.get_fact_at_end_of_block(orig);
-  for(auto i = orig_bb->cbegin(); i != orig_bb->cend(); ++i){
-    Instruction* orig_ins = *i;
+  for(auto j = orig_bb->cbegin(); j != orig_bb->cend(); ++j){
+    Instruction* orig_ins = *j;
     Instruction* new_ins = orig_ins->duplicate();
     int total_operand = orig_ins->get_num_operands();
     for(int i = 1; i < total_operand; i++){
@@ -292,8 +292,7 @@ MyOptimization::copy_prop(const InstructionSequence* orig_bb, BasicBlock* orig){
           } else{
             new_ins->set_operand(candidate, i);
           }
-        }
-        if(match_hl(HINS_mov_b, orig_ins->get_opcode())){
+        } else if(match_hl(HINS_mov_b, orig_ins->get_opcode())){
           Operand dest = orig_ins->get_operand(0);
           if(dest.is_reg() && dest.get_base_reg() > 9 && !live_after.test(dest.get_base_reg())){
             if(!(op_map.find(op.get_base_reg()) != op_map.end() && op_map[op.get_base_reg()].is_memref())){
