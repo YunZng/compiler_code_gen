@@ -286,9 +286,9 @@ MyOptimization::copy_prop(const InstructionSequence* orig_bb, BasicBlock* orig){
     Instruction* orig_ins = *j;
     Instruction* new_ins = orig_ins->duplicate();
     int total_operand = orig_ins->get_num_operands();
-    if(!orig_ins->get_num_operands() < 1){
+    if(orig_ins->get_num_operands() > 0){
       Operand dest = orig_ins->get_operand(0);
-      if(dest.has_base_reg() && op_map.find(dest.get_base_reg()) != op_map.end()){
+      if(dest.has_base_reg() && op_map.find(dest.get_base_reg()) != op_map.end() && m_live_vregs.get_fact_after_instruction(orig, orig_ins).test(dest.get_base_reg())){
         Operand candidate = op_map[dest.get_base_reg()];
         if(dest.is_memref()){
           new_ins->set_operand(candidate.to_memref(), 0);
