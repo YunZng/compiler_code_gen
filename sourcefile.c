@@ -1,14 +1,13 @@
 int main(void){
-  int n, i, sum;
+  int a, b, c;
 
-  n = 11;
-  i = 1;
-  sum = 0;
+  a = 2;
+  b = 3;
+  c = 1;
 
-  while(i <= n){
-    sum = sum + i;
-    i = i + 1;
+  if(a + 1 == b){
+    c = 0;
   }
 
-  return sum;
+  return c;
 }

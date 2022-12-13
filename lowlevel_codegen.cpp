@@ -509,6 +509,7 @@ Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode, int size, const std::
     int base = hl_opcode.get_base_reg();
     if(base >= 10){
       // base -= 10;
+      // printf("base %d becomes %d\n", base, mem_addr - (highest - base) * 8);
       base = highest - base;
       Operand op(Operand::MREG64_MEM_OFF, MREG_RBP, mem_addr - base * 8);
       if(hl_opcode.get_mreg()){
