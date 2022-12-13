@@ -32,6 +32,7 @@ public:
 
   virtual std::shared_ptr<InstructionSequence> constant_fold(const InstructionSequence* orig_bb, BasicBlock*) = 0;
   virtual std::shared_ptr<InstructionSequence> reg_alloc(const InstructionSequence* orig_bb, BasicBlock*) = 0;
+  virtual std::shared_ptr<InstructionSequence> copy_prop(const InstructionSequence* orig_bb, BasicBlock*) = 0;
   virtual std::shared_ptr<InstructionSequence> dead_store(const InstructionSequence* orig_bb) = 0;
 };
 
@@ -44,10 +45,10 @@ public:
   ~MyOptimization();
 
   virtual std::shared_ptr<InstructionSequence> constant_fold(const InstructionSequence* orig_bb, BasicBlock* orig);
+  virtual std::shared_ptr<InstructionSequence> copy_prop(const InstructionSequence* orig_bb, BasicBlock* orig);
   virtual std::shared_ptr<InstructionSequence> reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig);
   virtual std::shared_ptr<InstructionSequence> dead_store(const InstructionSequence* orig_bb);
 
 private:
-  void loop_check(int, Instruction*&, Instruction*&, std::unordered_map<int, long>&);
 };
 #endif // CFG_TRANSFORM_H

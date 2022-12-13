@@ -33,10 +33,12 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
 
     // Transform the instructions
     std::shared_ptr<InstructionSequence> transformed_bb = dead_store(orig);
+    //10 iterations of constant propagation and constant folding
     for(auto i = 0; i < 10; i++){
       transformed_bb = constant_fold(transformed_bb.get(), orig);
     }
     // transformed_bb = reg_alloc(transformed_bb.get(), orig);
+    transformed_bb = copy_prop(transformed_bb.get(), orig);
 
     for(auto i = transformed_bb->cbegin(); i != transformed_bb->cend(); i++){
       HighLevelFormatter formatter;
@@ -271,6 +273,45 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
   return result_iseq;
 }
 
-void MyOptimization::loop_check(int i, Instruction*& new_ins, Instruction*& orig_ins, std::unordered_map<int, long>& vregVal){
-  puts("diuwa");
+std::shared_ptr<InstructionSequence>
+MyOptimization::copy_prop(const InstructionSequence* orig_bb, BasicBlock* orig){
+  std::shared_ptr<InstructionSequence> result_iseq(new InstructionSequence());
+  std::unordered_map<int, Operand> op_map;
+  LiveVregs::FactType live_after = m_live_vregs.get_fact_at_end_of_block(orig);
+  for(auto i = orig_bb->cbegin(); i != orig_bb->cend(); ++i){
+    Instruction* orig_ins = *i;
+    Instruction* new_ins = orig_ins->duplicate();
+    int total_operand = orig_ins->get_num_operands();
+    for(int i = 1; i < total_operand; i++){
+      Operand op = orig_ins->get_operand(i);
+      if(op.has_base_reg()){
+        if(op_map.find(op.get_base_reg()) != op_map.end()){
+          Operand candidate = op_map[op.get_base_reg()];
+          if(op.is_reg() && candidate.is_memref()){
+            new_ins->set_operand(candidate, i);
+          } else{
+            new_ins->set_operand(candidate, i);
+          }
+        }
+        if(match_hl(HINS_mov_b, orig_ins->get_opcode())){
+          Operand dest = orig_ins->get_operand(0);
+          if(dest.is_reg() && dest.get_base_reg() > 9 && !live_after.test(dest.get_base_reg())){
+            if(!(op_map.find(op.get_base_reg()) != op_map.end() && op_map[op.get_base_reg()].is_memref())){
+              op_map[dest.get_base_reg()] = op;
+              delete new_ins;
+              new_ins = nullptr;
+            }
+          }
+        }
+      }
+
+
+    }
+    if(new_ins){
+      result_iseq->append(new_ins);
+      new_ins = nullptr;
+    }
+  }
+
+  return result_iseq;
 }
