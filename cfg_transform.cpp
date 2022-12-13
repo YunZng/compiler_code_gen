@@ -283,6 +283,7 @@ MyOptimization::copy_prop(const InstructionSequence* orig_bb, BasicBlock* orig){
     Instruction* new_ins = orig_ins->duplicate();
     int total_operand = orig_ins->get_num_operands();
     for(int i = 1; i < total_operand; i++){
+      Operand dest = orig_ins->get_operand(0);
       Operand op = orig_ins->get_operand(i);
       if(op.has_base_reg()){
         if(op_map.find(op.get_base_reg()) != op_map.end()){
@@ -293,18 +294,21 @@ MyOptimization::copy_prop(const InstructionSequence* orig_bb, BasicBlock* orig){
             new_ins->set_operand(candidate, i);
           }
         } else if(match_hl(HINS_mov_b, orig_ins->get_opcode())){
-          Operand dest = orig_ins->get_operand(0);
-          if(dest.is_reg() && dest.get_base_reg() > 9 && !live_after.test(dest.get_base_reg())){
-            if(!(op_map.find(op.get_base_reg()) != op_map.end() && op_map[op.get_base_reg()].is_memref())){
+          if(dest.has_base_reg() && dest.get_base_reg() > 9 && !live_after.test(dest.get_base_reg())){
+            if(dest.is_reg() && !(op_map.find(op.get_base_reg()) != op_map.end() && op_map[op.get_base_reg()].is_memref())){
               op_map[dest.get_base_reg()] = op;
               delete new_ins;
               new_ins = nullptr;
             }
           }
         }
+      } else if(dest.is_memref()){
+        puts("what");
+        Instruction* new_ins2 = new_ins->duplicate();
+        new_ins2->set_operand(Operand(Operand::VREG, dest.get_base_reg()), 0);
+        new_ins2->set_operand(op_map[dest.get_base_reg()], 1);
+        result_iseq->append(new_ins2);
       }
-
-
     }
     if(new_ins){
       result_iseq->append(new_ins);
