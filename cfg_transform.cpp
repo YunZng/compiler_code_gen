@@ -38,7 +38,9 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
       transformed_bb = constant_fold(transformed_bb.get(), orig);
     }
     // transformed_bb = reg_alloc(transformed_bb.get(), orig);
-    transformed_bb = copy_prop(transformed_bb.get(), orig);
+    for(auto i = 0; i < 10; i++){
+      transformed_bb = copy_prop(transformed_bb.get(), orig);
+    }
 
     for(auto i = transformed_bb->cbegin(); i != transformed_bb->cend(); i++){
       HighLevelFormatter formatter;
@@ -220,8 +222,9 @@ bool myComp2(std::pair<Operand*, int> a, std::pair<Operand*, int> b){
   return a.first->use_cnt < b.first->use_cnt;
 }
 std::shared_ptr<InstructionSequence>
-MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
+MyOptimization::reg_alloc(const InstructionSequence* orig_bb){
   std::shared_ptr<InstructionSequence> result_iseq(new InstructionSequence());
+  const BasicBlock* orig = static_cast<const BasicBlock*>(orig_bb);
   // register maps to virtual register(holder)
   std::multimap<Operand*, int, myComp> registers;
   std::map<int, Operand> local_reg;
@@ -275,6 +278,7 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb, BasicBlock* orig){
 
 std::shared_ptr<InstructionSequence>
 MyOptimization::copy_prop(const InstructionSequence* orig_bb, BasicBlock* orig){
+  const BasicBlock* bb_orig = static_cast<const BasicBlock*>(orig_bb);
   std::shared_ptr<InstructionSequence> result_iseq(new InstructionSequence());
   std::unordered_map<int, Operand> op_map;
   LiveVregs::FactType live_after = m_live_vregs.get_fact_at_end_of_block(orig);
@@ -282,32 +286,36 @@ MyOptimization::copy_prop(const InstructionSequence* orig_bb, BasicBlock* orig){
     Instruction* orig_ins = *j;
     Instruction* new_ins = orig_ins->duplicate();
     int total_operand = orig_ins->get_num_operands();
-    for(int i = 1; i < total_operand; i++){
+    if(!orig_ins->get_num_operands() < 1){
       Operand dest = orig_ins->get_operand(0);
-      Operand op = orig_ins->get_operand(i);
-      if(op.has_base_reg()){
-        if(op_map.find(op.get_base_reg()) != op_map.end()){
-          Operand candidate = op_map[op.get_base_reg()];
-          if(op.is_reg() && candidate.is_memref()){
-            new_ins->set_operand(candidate, i);
-          } else{
-            new_ins->set_operand(candidate, i);
-          }
-        } else if(match_hl(HINS_mov_b, orig_ins->get_opcode())){
-          if(dest.has_base_reg() && dest.get_base_reg() > 9 && !live_after.test(dest.get_base_reg())){
-            if(dest.is_reg() && !(op_map.find(op.get_base_reg()) != op_map.end() && op_map[op.get_base_reg()].is_memref())){
-              op_map[dest.get_base_reg()] = op;
-              delete new_ins;
-              new_ins = nullptr;
+      if(dest.has_base_reg() && op_map.find(dest.get_base_reg()) != op_map.end()){
+        Operand candidate = op_map[dest.get_base_reg()];
+        if(dest.is_memref()){
+          new_ins->set_operand(candidate.to_memref(), 0);
+        } else{
+          new_ins->set_operand(candidate, 0);
+        }
+      }
+      for(int i = 1; i < total_operand; i++){
+        Operand op = orig_ins->get_operand(i);
+        if(op.has_base_reg()){
+          if(op_map.find(op.get_base_reg()) != op_map.end()){
+            Operand candidate = op_map[op.get_base_reg()];
+            if(op.is_reg() && candidate.is_memref()){
+              new_ins->set_operand(candidate, i);
+            } else{
+              new_ins->set_operand(candidate, i);
+            }
+          } else if(match_hl(HINS_mov_b, orig_ins->get_opcode())){
+            if(dest.is_reg() && dest.get_base_reg() > 9 && !live_after.test(dest.get_base_reg()) && !m_live_vregs.get_fact_after_instruction(bb_orig, orig_ins).test(dest.get_base_reg())){
+              if(!(op_map.find(op.get_base_reg()) != op_map.end() && op_map[op.get_base_reg()].is_memref())){
+                op_map[dest.get_base_reg()] = op;
+                delete new_ins;
+                new_ins = nullptr;
+              }
             }
           }
         }
-      } else if(dest.is_memref()){
-        puts("what");
-        Instruction* new_ins2 = new_ins->duplicate();
-        new_ins2->set_operand(Operand(Operand::VREG, dest.get_base_reg()), 0);
-        new_ins2->set_operand(op_map[dest.get_base_reg()], 1);
-        result_iseq->append(new_ins2);
       }
     }
     if(new_ins){
