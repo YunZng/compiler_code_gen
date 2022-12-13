@@ -21,6 +21,7 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::get_orig_cfg(){
 }
 
 void ControlFlowGraphTransform::get_ranking(){
+  std::vector<std::pair<int, int>> vreg_ranking;
   std::map<int, int> vreg_ranking_map;
   for(auto i = m_cfg->bb_begin(); i != m_cfg->bb_end(); i++){
     auto bb = *i;
@@ -40,6 +41,21 @@ void ControlFlowGraphTransform::get_ranking(){
   std::sort(vreg_ranking.begin(), vreg_ranking.end(), [](const std::pair<int, int>& l, const std::pair<int, int>& r){
     return l.second < r.second;
     });
+  // for(auto i : vreg_ranking){
+  //   printf("[%d, %d]\n", i.first, i.second);
+  // }
+  // occupant - callee register
+  for(int i = 12; i < 16; i++){
+    int vreg;
+    if(vreg_ranking.empty()){
+      vreg = 0;
+    } else{
+      vreg = vreg_ranking.back().first;
+      vreg_ranking.pop_back();
+    }
+    // printf("the thing was %d\n", vreg);
+    registers.emplace(vreg, i);
+  }
 }
 std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
   std::shared_ptr<ControlFlowGraph> result(new ControlFlowGraph());
@@ -236,18 +252,6 @@ MyOptimization::dead_store(const InstructionSequence* orig_bb){
 void
 MyOptimization::reg_alloc(const InstructionSequence* orig_bb){
   const BasicBlock* orig = static_cast<const BasicBlock*>(orig_bb);
-  // occupant - callee register
-  std::multimap<int, int> registers;
-  for(int i = 12; i < 16; i++){
-    int vreg;
-    if(vreg_ranking.empty()){
-      vreg = 0;
-    } else{
-      vreg = vreg_ranking.back().first;
-      vreg_ranking.pop_back();
-    }
-    registers.emplace(vreg, i);
-  }
 
   for(auto j = orig_bb->cbegin(); j != orig_bb->cend(); ++j){
     Instruction* orig_ins = *j;
@@ -258,6 +262,7 @@ MyOptimization::reg_alloc(const InstructionSequence* orig_bb){
       Operand op = orig_ins->get_operand(i);
       if(op.has_base_reg() && registers.find(op.get_base_reg()) != registers.end()){
         op.set_mreg(registers.find(op.get_base_reg())->second);
+        // op = Operand(Operand::VREG, 12345678);
         orig_ins->set_operand(op, i);
       }
     }

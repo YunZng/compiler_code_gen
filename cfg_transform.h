@@ -11,7 +11,7 @@ private:
   std::shared_ptr<ControlFlowGraph> m_cfg;
 
 public:
-  std::vector<std::pair<int, int>> vreg_ranking;
+  std::multimap<int, int> registers;
   ControlFlowGraphTransform(const std::shared_ptr<ControlFlowGraph>& cfg);
 
   virtual ~ControlFlowGraphTransform();

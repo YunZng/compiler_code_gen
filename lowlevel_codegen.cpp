@@ -530,9 +530,13 @@ Operand LowLevelCodeGen::get_ll_operand(Operand hl_opcode, int size, const std::
       // base -= 10;
     }
     Operand op(Operand::MREG64_MEM_OFF, MREG_RBP, mem_addr - base * 8);
-    // printf("memadd = %d\n", mem_addr);
     Operand r11(Operand::MREG64, MREG_R11);
-    ll_iseq->append(new Instruction(MINS_MOVQ, op, r11));
+    if(hl_opcode.get_mreg()){
+      return Operand(select_mreg_kind(size), hl_opcode.get_mreg()).to_memref();
+    } else{
+      // printf("memadd = %d\n", mem_addr);
+      ll_iseq->append(new Instruction(MINS_MOVQ, op, r11));
+    }
     return r11.to_memref();
   }
   // printf("hlopcode, %d", hl_opcode.get_kind());
