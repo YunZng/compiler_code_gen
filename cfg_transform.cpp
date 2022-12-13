@@ -299,20 +299,26 @@ MyOptimization::copy_prop(const InstructionSequence* orig_bb, BasicBlock* orig){
       for(int i = 1; i < total_operand; i++){
         Operand op = orig_ins->get_operand(i);
         if(op.has_base_reg()){
-          if(op_map.find(op.get_base_reg()) != op_map.end()){
+          if(match_hl(HINS_mov_b, orig_ins->get_opcode())){
+            if(result_iseq->get_length()){
+
+              Instruction* last_ins = result_iseq->get_last_instruction();
+              if(last_ins != nullptr && HighLevel::is_def(last_ins)){
+                Operand last_dest = last_ins->get_operand(0);
+                if(last_dest.is_reg() && op.is_reg() && last_dest.get_base_reg() == op.get_base_reg() && !m_live_vregs.get_fact_after_instruction(bb_orig, orig_ins).test(op.get_base_reg())){
+                  last_ins->set_operand(dest, 0);
+                  op_map[last_dest.get_base_reg()] = dest;
+                  delete new_ins;
+                  new_ins = nullptr;
+                }
+              }
+            }
+          } else if(op_map.find(op.get_base_reg()) != op_map.end()){
             Operand candidate = op_map[op.get_base_reg()];
             if(op.is_reg() && candidate.is_memref()){
               new_ins->set_operand(candidate, i);
             } else{
               new_ins->set_operand(candidate, i);
-            }
-          } else if(match_hl(HINS_mov_b, orig_ins->get_opcode())){
-            if(dest.is_reg() && dest.get_base_reg() > 9 && !live_after.test(dest.get_base_reg()) && !m_live_vregs.get_fact_after_instruction(bb_orig, orig_ins).test(dest.get_base_reg())){
-              if(!(op_map.find(op.get_base_reg()) != op_map.end() && op_map[op.get_base_reg()].is_memref())){
-                op_map[dest.get_base_reg()] = op;
-                delete new_ins;
-                new_ins = nullptr;
-              }
             }
           }
         }

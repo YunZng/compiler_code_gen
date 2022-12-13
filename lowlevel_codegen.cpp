@@ -98,20 +98,22 @@ std::shared_ptr<InstructionSequence> LowLevelCodeGen::generate(const std::shared
   std::shared_ptr<InstructionSequence> cur_hl_iseq(hl_iseq);
 
   if(m_optimize){
-    // Create a control-flow graph representation of the high-level code
-    HighLevelControlFlowGraphBuilder hl_cfg_builder(cur_hl_iseq);
-    std::shared_ptr<ControlFlowGraph> cfg = hl_cfg_builder.build();
+    for(int i = 0; i < 1; i++){
+      // Create a control-flow graph representation of the high-level code
+      HighLevelControlFlowGraphBuilder hl_cfg_builder(cur_hl_iseq);
+      std::shared_ptr<ControlFlowGraph> cfg = hl_cfg_builder.build();
 
-    // Do local optimizations
-    MyOptimization hl_opts(cfg);
-    cfg = hl_opts.transform_cfg();
+      // Do local optimizations
+      MyOptimization hl_opts(cfg);
+      cfg = hl_opts.transform_cfg();
 
-    // Convert the transformed high-level CFG back to an InstructionSequence
-    cur_hl_iseq = cfg->create_instruction_sequence();
+      // Convert the transformed high-level CFG back to an InstructionSequence
+      cur_hl_iseq = cfg->create_instruction_sequence();
 
-    // The function definition AST might have information needed for
-    // low-level code generation
-    cur_hl_iseq->set_funcdef_ast(funcdef_ast);
+      // The function definition AST might have information needed for
+      // low-level code generation
+      cur_hl_iseq->set_funcdef_ast(funcdef_ast);
+    }
   }
 
   // Translate (possibly transformed) high-level code into low-level code
@@ -249,7 +251,7 @@ Operand::Kind select_mreg_kind(int operand_size){
     case 8:
       return Operand::MREG64;
     default:
-      assert(false);
+      // assert(false);
       return Operand::MREG64;
   }
 }
