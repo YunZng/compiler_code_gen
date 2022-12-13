@@ -1,9 +1,14 @@
 int main(void){
-  int i;
-  i = 0;
-  while(i <= i){
-    i = i;
+  int n, i, sum;
+
+  n = 11;
+  i = 1;
+  sum = 0;
+
+  while(i <= n){
+    sum = sum + i;
+    i = i + 1;
   }
 
-  return i;
+  return sum;
 }
