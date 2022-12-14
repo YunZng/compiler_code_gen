@@ -298,6 +298,7 @@ void LowLevelCodeGen::translate_instruction(Instruction* hl_ins, const std::shar
 
   if(hl_opcode == HINS_cjmp_t || hl_opcode == HINS_cjmp_f){
     label = hl_ins->get_operand(1);
+    first_operand = get_ll_operand(hl_ins->get_operand(0), 4, ll_iseq);
     ll_iseq->append(new Instruction(MINS_CMPL, zero, first_operand));
     ll_iseq->append(new Instruction(MINS_JNE - (hl_opcode - HINS_cjmp_t), label));
     return;
