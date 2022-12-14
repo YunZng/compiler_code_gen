@@ -45,7 +45,8 @@ void ControlFlowGraphTransform::get_ranking(){
   //   printf("[%d, %d]\n", i.first, i.second);
   // }
   // occupant - callee register
-  for(int i = 12; i < 16; i++){
+  for(int i = 8; i < 16; i++){
+    if(i == 10){ i++; continue; }
     int vreg;
     if(vreg_ranking.empty()){
       vreg = 0;
@@ -77,13 +78,13 @@ std::shared_ptr<ControlFlowGraph> ControlFlowGraphTransform::transform_cfg(){
       transformed_bb = copy_prop(transformed_bb.get(), orig);
     }
     reg_alloc(transformed_bb.get());
-    for(auto i = transformed_bb->cbegin(); i != transformed_bb->cend(); i++){
-      auto ins = *i;
-      HighLevelFormatter formatter;
-      std::string formatted_ins = formatter.format_instruction(ins);
-      // printf("\t%s\n", formatted_ins.c_str());
-    }
-    // puts("");
+    // for(auto i = transformed_bb->cbegin(); i != transformed_bb->cend(); i++){
+    //   auto ins = *i;
+    //   HighLevelFormatter formatter;
+    //   std::string formatted_ins = formatter.format_instruction(ins);
+    //   // printf("\t%s\n", formatted_ins.c_str());
+    // }
+    // // puts("");
 
     // Create transformed basic block; note that we set its
     // code order to be the same as the code order of the original
@@ -300,7 +301,6 @@ MyOptimization::copy_prop(const InstructionSequence* orig_bb, BasicBlock* orig){
         if(op.has_base_reg()){
           if(match_hl(HINS_mov_b, orig_ins->get_opcode())){
             if(result_iseq->get_length()){
-
               Instruction* last_ins = result_iseq->get_last_instruction();
               if(last_ins != nullptr && HighLevel::is_def(last_ins)){
                 Operand last_dest = last_ins->get_operand(0);

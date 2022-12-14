@@ -72,7 +72,10 @@ After:
         cmpeq_l  vr15, $3, $3
         cjmp_f   vr15, .L1
         mov_l    vr12, $1
-For programs that involve a lot of variable references like example29, there aren't that many constants to pass around, so the performance tend to be very poor for that. For programs like those, especially with so many loops and redundant calculations, using LVN to remove recomputation will play a big role. But unfortunately I could not get mine working.
+For programs that involve a lot of variable references like example29, there aren't that many constants to pass around, so the performance tend to be very poor for that. For programs like those, especially with so many loops and redundant calculations, using LVN to remove recomputation will play a big role.
+
+I decided to attemp copy propagation and global callee register allocation next. 
+I started with copy propagation, it's a rather straight forward one. I started by 
 
 I am aware that the efficiency will not have a significant increase until local register allocation is implemented, because accessing register is way faster than access the cache or memory. I gave my best.
 
