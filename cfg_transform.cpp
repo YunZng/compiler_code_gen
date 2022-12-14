@@ -45,8 +45,7 @@ void ControlFlowGraphTransform::get_ranking(){
   //   printf("[%d, %d]\n", i.first, i.second);
   // }
   // occupant - callee register
-  for(int i = 8; i < 16; i++){
-    if(i == 10){ i++; continue; }
+  for(int i = 12; i < 16; i++){
     int vreg;
     if(vreg_ranking.empty()){
       vreg = 0;
